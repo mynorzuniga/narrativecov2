@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -10,13 +12,103 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-eb-garamond), "EB Garamond", Georgia, serif;
+
+  --color-oxblood-ink-50: #fff7f6;
+  --color-oxblood-ink-100: #f6ddd9;
+  --color-oxblood-ink-200: #e4b9b4;
+  --color-oxblood-ink-300: #d29790;
+  --color-oxblood-ink-400: #c17971;
+  --color-oxblood-ink-500: #b26057;
+  --color-oxblood-ink-600: #a54a42;
+  --color-oxblood-ink-700: #97332d;
+  --color-oxblood-ink-800: #891616;
+  --color-oxblood-ink-900: #550000;
+  --color-oxblood-ink-950: #2c0000;
+
+  --color-charcoal-50: #fbfafa;
+  --color-charcoal-100: #e0dede;
+  --color-charcoal-200: #bdbbbb;
+  --color-charcoal-300: #9b9898;
+  --color-charcoal-400: #7f7b7b;
+  --color-charcoal-500: #686363;
+  --color-charcoal-600: #555050;
+  --color-charcoal-700: #423e3e;
+  --color-charcoal-800: #312c2c;
+  --color-charcoal-900: #191515;
+  --color-charcoal-950: #070505;
+
+  --color-amber-50: #fff9ee;
+  --color-amber-100: #f9ebd7;
+  --color-amber-200: #efd9b8;
+  --color-amber-300: #e6c799;
+  --color-amber-400: #ddb87e;
+  --color-amber-500: #d5aa65;
+  --color-amber-600: #cf9f4f;
+  --color-amber-700: #c99335;
+  --color-amber-800: #c2880b;
+  --color-amber-900: #653500;
+  --color-amber-950: #200000;
+
+  --color-cream-100: #fbf6ee;
+  --color-cream-200: #e8e3dd;
+  --color-cream-300: #d8d4ce;
+
+  --color-surface-page-default: var(--color-cream-100);
+  --color-surface-container-default: var(--color-cream-100);
+  --color-surface-container-accent1: var(--color-oxblood-ink-800);
+  --color-surface-container-accent2: var(--color-charcoal-800);
+  --color-surface-container-disabled: var(--color-charcoal-200);
+  --color-surface-container-warning: var(--color-amber-50);
+  --color-surface-container-success: var(--color-oxblood-ink-600);
+  --color-surface-cta-primary: var(--color-oxblood-ink-800);
+  --color-surface-cta-secondary: var(--color-charcoal-800);
+  --color-surface-cta-tertiary: var(--color-cream-200);
+  --color-surface-field-enabled: var(--color-cream-100);
+  --color-surface-field-disabled: var(--color-charcoal-200);
+
+  --color-line-field-enabled: var(--color-charcoal-600);
+  --color-line-field-disabled: var(--color-charcoal-500);
+  --color-line-field-active: var(--color-oxblood-ink-600);
+  --color-line-field-warning: var(--color-amber-800);
+
+  --color-text-default-heading: var(--color-charcoal-800);
+  --color-text-default-subheading: var(--color-charcoal-700);
+  --color-text-default-body: var(--color-charcoal-600);
+  --color-text-default-complementary: var(--color-charcoal-400);
+  --color-text-default-accent: var(--color-oxblood-ink-800);
+
+  --color-text-accent1-heading: var(--color-cream-100);
+  --color-text-accent1-subheading: var(--color-charcoal-50);
+  --color-text-accent1-body: var(--color-charcoal-100);
+  --color-text-accent1-complementary: var(--color-charcoal-300);
+  --color-text-accent1-accent: var(--color-oxblood-ink-200);
+
+  --color-text-accent2-heading: var(--color-cream-100);
+  --color-text-accent2-subheading: var(--color-oxblood-ink-50);
+  --color-text-accent2-body: var(--color-oxblood-ink-100);
+  --color-text-accent2-complementary: var(--color-oxblood-ink-300);
+  --color-text-accent2-accent: var(--color-cream-100);
+
+  --color-text-disabled-default: var(--color-charcoal-600);
+
+  --color-text-warning-heading: var(--color-amber-900);
+  --color-text-warning-body: var(--color-amber-800);
+
+  --color-text-success-heading: var(--color-cream-100);
+  --color-text-success-body: var(--color-oxblood-ink-100);
+
+  --color-text-cta-primary: var(--color-cream-100);
+  --color-text-cta-secondary: var(--color-charcoal-50);
+  --color-text-cta-tertiary: var(--color-charcoal-800);
+
+  --color-text-field-default: var(--color-charcoal-800);
+  --color-text-field-placeholder: var(--color-charcoal-500);
+  --color-text-field-disabled: var(--color-charcoal-500);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
 }
 
 body {

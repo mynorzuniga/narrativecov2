@@ -1,0 +1,80 @@
+"use client";
+
+import { Bell, Flame, User } from "@phosphor-icons/react";
+import { useState } from "react";
+import { ICON_SIZE_PX, ICON_WEIGHT_DEFAULT } from "@/lib/icons/scale";
+import { NotificationsPanel } from "@/components/notifications-panel";
+import { BODY_STYLES } from "@/lib/typography/scale";
+
+const bodyBig = BODY_STYLES.find((s) => s.id === "big")!;
+const bodyStandard = BODY_STYLES.find((s) => s.id === "body")!;
+
+const iconButtonClass =
+  "inline-flex items-center justify-center text-text-default-heading";
+
+export function Header() {
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  return (
+    <>
+      <header className="grid h-[3rem] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-text-default-complementary bg-surface-page-default px-[1rem]">
+        <div className="flex items-center gap-[0.25rem]">
+          <Flame
+            size={ICON_SIZE_PX.sm}
+            weight={ICON_WEIGHT_DEFAULT}
+            className="text-text-default-accent"
+            aria-hidden
+          />
+          <span
+            className="font-serif font-medium leading-none text-text-default-heading"
+            style={{ fontSize: bodyStandard.size }}
+          >
+            7
+          </span>
+        </div>
+
+        <span
+          className="text-center font-serif font-medium leading-none text-text-default-heading"
+          style={{ fontSize: bodyBig.size }}
+        >
+          Narrative
+          <span className="text-text-default-accent">Co</span>
+        </span>
+
+        <div className="flex items-center justify-end gap-[0.75rem]">
+          <button
+            type="button"
+            aria-label="Notifications"
+            aria-expanded={notificationsOpen}
+            onClick={() => setNotificationsOpen(true)}
+            className={iconButtonClass}
+          >
+            <span className="relative inline-flex">
+              <Bell
+                size={ICON_SIZE_PX.sm}
+                weight={ICON_WEIGHT_DEFAULT}
+                aria-hidden
+              />
+              <span
+                className="absolute right-0 top-0 size-[0.5rem] translate-x-1/4 -translate-y-1/4 rounded-full bg-text-default-accent"
+                aria-hidden
+              />
+            </span>
+          </button>
+          <button type="button" aria-label="Account" className={iconButtonClass}>
+            <User
+              size={ICON_SIZE_PX.sm}
+              weight={ICON_WEIGHT_DEFAULT}
+              aria-hidden
+            />
+          </button>
+        </div>
+      </header>
+
+      <NotificationsPanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
+    </>
+  );
+}

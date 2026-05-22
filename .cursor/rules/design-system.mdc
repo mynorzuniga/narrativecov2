@@ -1,0 +1,59 @@
+---
+description: Enforce design.md rules and src/lib token sources for all UI work
+alwaysApply: true
+---
+
+# Design system authority
+
+Three layers — know which you are allowed to use:
+
+| Layer | Path | Product UI |
+|-------|------|------------|
+| **Palette (root)** | `src/lib/colors/*.ts`, `--color-{palette}-{shade}` | **Forbidden** |
+| **Semantic** | `src/lib/tokens/surface.ts`, `src/lib/tokens/text.ts`, `bg-surface-*`, `text-text-*` | **Required** |
+| **Rules** | `design.md` | Read first |
+
+## Before any UI work
+
+1. Read `design.md` (especially § Semantic tokens (strict)).
+2. Read the relevant `src/lib/` token files for **exact values** (do not rely on memory or duplicated tables).
+3. For **product** color UI, use only semantic Tailwind classes (`bg-surface-*`, `text-text-*`) or imports from `@/lib/tokens/*`.
+
+## Semantic tokens (strict) — product UI
+
+- **Always** reference semantic tokens when building product pages, layouts, and components.
+- **Never** use root palette utilities: `bg-cream-100`, `text-charcoal-800`, `border-oxblood-ink-200`, `bg-amber-50`, etc.
+- **Never** import `src/lib/colors/*` in product components — only `src/lib/tokens/*` (token files may import colors internally).
+- **Never** hardcode hex in product UI; use semantic token exports or semantic Tailwind classes.
+- The `paletteClass` field on tokens is **documentation only**, not an allowed class in product code.
+- If no semantic token exists for the intent, **stop and ask** — extend `src/lib/tokens/*` and `globals.css`, then `design.md`.
+
+## Allowed palette (root) usage
+
+- `src/lib/tokens/surface.ts` and `src/lib/tokens/text.ts` — defining semantic mappings
+- `src/app/globals.css` — `--color-{palette}-{shade}` and semantic aliases
+- `src/components/design-system/color-tab.tsx`, `color-palette.tsx` — palette documentation viewer only
+
+## Icons — Phosphor only
+
+- Use **`@phosphor-icons/react`** for all UI icons — no Lucide, Heroicons, React Icons, or ad-hoc SVG icon components.
+- Sizes from `src/lib/icons/scale.ts` → `ICON_SIZE_PX`; default weight **`regular`** (`ICON_WEIGHT_DEFAULT`).
+- Icon color via **semantic text tokens** (`text-text-*`), not root palette classes.
+- Decorative icons: `aria-hidden`; controls with icon-only buttons need `aria-label` on the interactive element.
+
+## Other prohibitions
+
+- Inventing or approximating tokens not in `src/lib/*`
+- Default Tailwind palettes (`zinc-*`, `gray-*`, etc.) unless added to the system
+- `text-sm` / `p-4` / `gap-6` and other default spacing/type scales (see `design.md`)
+- Font weights outside **400, 500, 600**; product fonts outside **EB Garamond** (`font-serif`)
+- Dark mode or new tokens without updating code **and** `design.md`
+- Product components not listed in `design.md`
+
+## When something is missing
+
+Stop and ask. Extend `src/lib/tokens/*`, `globals.css`, then `design.md` — **do not** improvise and **do not** fall back to root palette classes.
+
+## Conflicts
+
+**Code wins for values.** Update `src/lib/*` / `globals.css` for intentional changes, then align `design.md` rules/semantics. Never maintain duplicate hex tables in `design.md`.
