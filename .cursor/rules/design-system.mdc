@@ -46,7 +46,7 @@ Three layers — know which you are allowed to use:
 - Inventing or approximating tokens not in `src/lib/*`
 - Default Tailwind palettes (`zinc-*`, `gray-*`, etc.) unless added to the system
 - `text-sm` / `p-4` / `gap-6` and other default spacing/type scales (see `design.md`)
-- Font weights outside **400, 500, 600**; product fonts outside **EB Garamond** (`font-serif`)
+- Font weights outside **400, 500, 600**; product fonts outside **EB Garamond** (`font-serif`) — except **`Logo`**, which must use **`ibmPlexMono.className`** from `src/lib/typography/fonts.ts` (IBM Plex Mono via `next/font/google`)
 - Dark mode or new tokens without updating code **and** `design.md`
 - Product components not listed in `design.md`
 

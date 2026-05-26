@@ -41,6 +41,7 @@ Defined in code where noted; semantics here.
 | Page text | `text-foreground` | `globals.css` → `#171717` |
 | UI chrome (labels, tabs) | `font-sans` (Geist) | `layout.tsx` |
 | Product typography | `font-serif` (EB Garamond) | `layout.tsx`, `globals.css` |
+| Logo | `font-logo` (IBM Plex Mono) | `src/lib/typography/fonts.ts`, `globals.css` |
 
 ---
 
@@ -265,7 +266,7 @@ Display sizes are larger than Heading 1 (`3rem`). **Display 2** matches the Lear
 
 ### Usage
 
-Read `size` from `DISPLAY_STYLES`, `HEADING_STYLES`, or `BODY_STYLES`; use `font-serif` + `text-[{size}]` or inline `fontSize` from the scale + weight class.
+Read `size` from `DISPLAY_STYLES`, `HEADING_STYLES`, or `BODY_STYLES`; use `font-serif` + inline `fontSize` from the scale + weight class.
 
 ```tsx
 // Display 2, SemiBold — size from DISPLAY_STYLES in scale.ts
@@ -287,7 +288,7 @@ import { DISPLAY_STYLES, HEADING_STYLES, BODY_STYLES, FONT_WEIGHTS } from "@/lib
 - `text-sm`, `text-base`, `text-xl`, `text-2xl`, etc.
 - `font-bold` (700), `font-light` (300), or any weight ∉ {400, 500, 600}
 - `font-sans` on product body/headings
-- Any product font family other than EB Garamond
+- Any product font family other than EB Garamond — except `Logo`, which uses `ibmPlexMono.className` (IBM Plex Mono)
 
 ---
 
@@ -342,6 +343,7 @@ Registers Tailwind colors from token files.
 | `font-sans` | Geist — UI chrome |
 | `font-mono` | Geist Mono |
 | `font-serif` | EB Garamond — product type |
+| `font-logo` | IBM Plex Mono — `Logo` only (`ibmPlexMono.className`; `font-logo` token is reference-only) |
 | `{palette}-{shade}` | **Root only** — wired by semantic tokens; not for product UI |
 | `background` / `foreground` | Legacy layout defaults; prefer semantic `surface-*` / `text-*` for product |
 | **Semantic** (`surface-*`, `line-*`, `text-*`) | **Required** for all product color UI |
@@ -386,7 +388,7 @@ Registers Tailwind colors from token files.
 | `TokensTab` | `src/components/design-system/tokens-tab.tsx` | Semantic token browser (subtabs) |
 | `TokensColorSubtab` | `src/components/design-system/tokens-color-subtab.tsx` | Surface, line, and text semantic tokens |
 | `ComponentsTab` | `src/components/design-system/components-tab.tsx` | Product component previews (subtabs) |
-| `NavigationSubtab` | `src/components/design-system/navigation-subtab.tsx` | Previews: Header, NavigationBar, Art1StackAnimation, phone frame |
+| `NavigationSubtab` | `src/components/design-system/navigation-subtab.tsx` | Previews: Header, NavigationBar, Art1StackAnimation, Art2StackAnimation, phone frame |
 | `CtaSubtab` | `src/components/design-system/cta-subtab.tsx` | Previews: primary, secondary, tertiary `CtaButton` |
 | `FieldsSubtab` | `src/components/design-system/fields-subtab.tsx` | Field previews, ready-to-use fields, phone frame |
 | `PhonePreviewFrame` | `src/components/design-system/phone-preview-frame.tsx` | 390×750px device frame; provides overlay portal root |
@@ -398,12 +400,15 @@ Registers Tailwind colors from token files.
 | Component | Path | Purpose |
 |-----------|------|---------|
 | `Header` | `src/components/header.tsx` | App header: brand center, streak count left, notifications and account right |
-| `Logo` | `src/components/logo.tsx` | Centered brand mark: “Narrative” + “Co” |
+| `Logo` | `src/components/logo.tsx` | Centered brand mark: “STORIES ARE THE ANSWER” |
 | `NavigationBar` | `src/components/navigation-bar.tsx` | Bottom nav: Home and Learn with selected-state styling |
 | `NotificationsPanel` | `src/components/notifications-panel.tsx` | Slide-over notifications menu from header bell |
 | `LearnStorySequence` | `src/components/learn-story-sequence.tsx` | Learn screen headline word reveal + art stack loop |
 | `FieldsPreviewContent` | `src/components/fields-preview-content.tsx` | Fields phone preview: sign-in headline, username/password, login CTA |
+| `PreviewContent` | `src/components/preview-content.tsx` | `/preview` phone content: logo, headline + art row, Start CTA |
+| `PreviewArtComposition` | `src/components/preview-art-composition.tsx` | Preview art phases: live stack, `man2` → `man3` scale pop |
 | `Art1StackAnimation` | `src/components/art1-stack-animation.tsx` | Layered art1 multiply-blend spring reveal |
+| `Art2StackAnimation` | `src/components/art2-stack-animation.tsx` | Layered art2 multiply-blend spring reveal |
 | `CtaButton` | `src/components/cta-button.tsx` | Primary, secondary, and tertiary call-to-action buttons |
 | `TextField` | `src/components/text-field.tsx` | Text input with optional label and complementary text |
 | `SearchField` | `src/components/search-field.tsx` | Search input with leading magnifying glass icon |
@@ -426,7 +431,7 @@ Registers Tailwind colors from token files.
 
 ### `Logo`
 
-- **Mark:** “Narrative” + “Co” — Body Big (`1.25rem`), `font-medium`, `font-serif`; “Narrative” `text-text-default-heading`, “Co” `text-text-default-accent`.
+- **Mark:** “STORIES ARE THE ANSWER” — default `1.125rem` (`LOGO_DEFAULT_SIZE` in `src/lib/typography/scale.ts`); optional prop `size` (`big` | `body` | `small`) from `BODY_STYLES`. **`ibmPlexMono.className`** from `next/font/google` (required for correct IBM Plex Mono — do not use `font-logo` alone). `font-medium`, `leading-tight`, `text-center`, `mt-[12px]`. “STORIES” `text-text-default-accent`; remainder `text-text-default-heading`.
 
 ### `NotificationsPanel`
 
@@ -446,15 +451,20 @@ Registers Tailwind colors from token files.
 ### `LearnStorySequence`
 
 - Used in the phone preview between `Header` and `NavigationBar`.
-- **Headline:** “Learn to Tell Your Story” — Display 2 (`5rem`), `font-semibold`, `leading-tight`, inline word flow; “Your” / “Story” use `text-text-default-accent`; words appear in order (`320ms`/word, spring fade-in per word).
+- **Headline:** “Learn to Tell Your Story” — Display 2 (`5rem`), `font-semibold`, `font-serif`, `leading-tight`, inline word flow; “Your” / “Story” use `text-text-default-accent`; words appear in order (`320ms`/word, spring fade-in per word).
 - **Pause:** `700ms` after headline completes before art starts.
-- **Art:** `Art1StackAnimation` (`embedded`, `350px` wide, `148px` below content bottom, man entry `240px` via `entryOffsets`) anchored to the bottom (overlaps headline slightly).
+- **Art:** `Art2StackAnimation` (`embedded`, `420px` wide, `128px` below content bottom, man entry `240px` via `entryOffsets`) anchored to the bottom (overlaps headline slightly).
 - **Loop:** after art sequence completes, hold `2s`, then reset headline + art and repeat.
 
 ### `Art1StackAnimation`
 
 - Layers `art1/man` → `bubble1` → `bubble2`; each layer uses `mix-blend-multiply` inside an `isolate` stack on `bg-surface-page-default` (animate `top` + `opacity` only — transforms break blend). Spring in from below (`man` `160px`, bubbles `96px`); stagger `0s` / `0.55s` / `1.1s`.
 - **Props:** `displayWidthPx` (default `280`), `embedded` (no outer padding/bg), `static` (all layers at rest, no animation), `transparentStack` (no opaque stack plate — layers blend with page; use for decorative backgrounds), `entryOffsets` (per-layer entry `top` override), `onSequenceComplete` (fires after last layer; animated only).
+
+### `Art2StackAnimation`
+
+- Layers `art2/man` → `bubble1` → `bubble2`; each layer uses `mix-blend-multiply` inside an `isolate` stack on `bg-surface-page-default`. **Man:** spring in from below (`160px` default, overridable via `entryOffsets`) with `top` + `opacity`. **Bubbles:** pop in with `scale` (`0.88`→`1`) + `opacity` (no vertical slide); snappier bubble spring (stiffness `200`, damping `20`, mass `0.85`). Stagger `0s` / `0.38s` / `0.72s`.
+- **Props:** `displayWidthPx` (default `280`), `embedded`, `static`, `transparentStack`, `entryOffsets` (man slide entry only), `springConfig` (man slide spring), `layerDelays` (per-layer stagger override), `onSequenceComplete`.
 
 ### `CtaButton`
 
@@ -494,6 +504,18 @@ Registers Tailwind colors from token files.
 - Phone content for Components → fields preview; no `Header` or `NavigationBar` — centered `Logo` at top (`pt-[1rem]`), sign-in content (`mt-[calc(3rem+2.5rem)]` below logo).
 - **Headline:** “Start Your Journey” — Display 2 (`5rem`), `font-semibold`, `font-serif`; “Start” `text-text-default-accent`, remainder `text-text-default-heading`.
 - **Fields:** `TextField` (label “Username”) and `PasswordField` (label “Password”); no complementary text; full-width primary `CtaButton` (“Login”) and secondary `CtaButton` (“Signup”, `className="w-full"`) below.
+
+### `PreviewContent`
+
+- Phone content for `/preview`; no `Header` or `NavigationBar` — centered `Logo` at top (`pt-[1rem]`), headline + art + CTA block vertically centered in remaining space.
+- **Headline row:** relative container — `Art2StackAnimation` (`embedded`, `240px` wide, multiply blend with stack plate, `z-0`, absolute top-right of headline block, `translate-x-[20px] -translate-y-[120px]`) behind headline; “Start” / “Your” / “Journey” (one word per line, left-aligned), Display 2 (`5rem`), `font-semibold`, `font-serif`, `leading-none`, `text-text-default-heading`, `z-10`.
+- **Body copy:** below headline (`mt-[1rem]`, full width) — Body Big (`1.25rem`), `font-normal`, `font-serif`, `leading-normal`, `text-text-default-body`: “You are a couple of steps a way from getting better at telling stories. Let's start this journey together.”
+- **CTA:** full-width primary `CtaButton` (“Start”), `mt-[1.25rem]` below body copy. Click slides headline, body, and CTA off-screen to the left (`x` `-105%`, `opacity` `0`, `0.55s`, `easeInOut`); logo stays. In parallel, art **animates from its resting top-right position** (`x` `20px`, `y` `-120px`, `scale` `1`) to center (`scale` `1.55` with subtle spring bounce: stiffness `110`, damping `15`; `x`/`y` use `0.55s` `easeInOut`), final position **40px above** measured vertical center. When focus motion completes, `PreviewArtComposition` switches from the full stack to `/art2/man2.jpg` with a scale pop (`0.88`→`1`, opacity `0`→`1`; spring stiffness `200`, damping `20`, mass `0.85`); when `man2` settles, it switches to `/art2/man3.jpg` with the same pop; when `man3` settles, it shifts **40px right** (`0.55s`, `easeInOut`). Then **pull transition** (`0.65s`, `easeInOut`): `man3` exits left off-frame while a full-bleed page (`bg-surface-container-accent1`) slides in from the right in the same motion (`man3` `z-30`, panel `z-10`); logo hidden during pull. On complete, content is the accent page only.
+- **Entrance:** headline, body copy, and CTA fade in with subtle upward motion (`opacity` 0→1, `y` `6px`→0, slow spring: stiffness `62`, damping `26`, mass `1.85`); body delayed `0.32s`, CTA `0.6s`. Art uses slower preview spring (stiffness `70`, mass `1.7`) on man; bubble stagger `0s` / `0.55s` / `1.05s` with scale pop.
+
+### `PreviewArtComposition`
+
+- Preview-only art renderer for `/preview`. **Phases:** `live` (`Art2StackAnimation`), `man2` (swap sequence: `/art2/man2.jpg` scale pop → `/art2/man3.jpg` scale pop → `man3` shifts `40px` right with ease, multiply blend). Calls `onMan3ShiftComplete` after the right shift. Same stack plate dimensions as `Art2StackAnimation`.
 
 ### `OverlayContainerContext`
 
@@ -539,7 +561,7 @@ When adding more: implement with **semantic** color tokens from `src/lib/tokens/
 - Semantic line field: `line/field/*` (see `src/lib/tokens/line.ts`).
 - **Strict semantic-only color rule** for product UI: no root `{palette}-{shade}` classes; palette column in docs is reference-only.
 - **Phosphor Icons** (`@phosphor-icons/react`); sizes in `src/lib/icons/scale.ts`.
-- **Header**, **NavigationBar**, **NotificationsPanel**, **LearnStorySequence**, and **Art1StackAnimation** — documented in Components → navigation.
+- **Header**, **NavigationBar**, **NotificationsPanel**, **LearnStorySequence**, **Art1StackAnimation**, and **Art2StackAnimation** — documented in Components → navigation.
 - **CtaButton** — documented in Components → cta.
 - **TextField**, **SearchField**, **PasswordField** — documented in Components → fields.
 - **OverlayContainerContext** — portal target for contained overlays in phone preview.

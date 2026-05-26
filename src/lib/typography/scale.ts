@@ -1,5 +1,5 @@
 export const TYPOGRAPHY_FONT = "EB Garamond";
-
+export const TYPOGRAPHY_LOGO_FONT = "IBM Plex Mono";
 export const FONT_WEIGHTS = [
   { id: "regular", label: "Regular", weight: 400 },
   { id: "medium", label: "Medium", weight: 500 },
@@ -23,6 +23,9 @@ export const BODY_STYLES = [
   { id: "body", label: "Body Standard", size: "1rem" },
   { id: "small", label: "Small", size: "0.75rem" },
 ] as const;
+
+/** Logo default — slightly below Body Big. */
+export const LOGO_DEFAULT_SIZE = "1.125rem";
 
 export type FontWeight = (typeof FONT_WEIGHTS)[number];
 export type DisplayStyle = (typeof DISPLAY_STYLES)[number];

@@ -14,12 +14,22 @@ type CtaButtonProps = {
   variant: CtaVariant;
   children: React.ReactNode;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
 };
 
-export function CtaButton({ variant, children, className }: CtaButtonProps) {
+export function CtaButton({
+  variant,
+  children,
+  className,
+  onClick,
+  disabled,
+}: CtaButtonProps) {
   return (
     <button
       type="button"
+      onClick={onClick}
+      disabled={disabled}
       className={`group relative inline-flex h-[3rem] items-center justify-center overflow-hidden rounded-[0.5rem] px-[1rem] font-serif font-semibold ${VARIANT_CLASSES[variant]}${className ? ` ${className}` : ""}`}
       style={{ fontSize: bodyBig.size }}
     >

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Art1StackAnimation } from "@/components/art1-stack-animation";
+import { Art2StackAnimation } from "@/components/art2-stack-animation";
 import { DISPLAY_STYLES } from "@/lib/typography/scale";
 
 const HEADLINE_WORDS = [
@@ -18,8 +18,8 @@ const display2 = DISPLAY_STYLES.find((s) => s.id === "display2")!;
 const WORD_INTERVAL_MS = 320;
 const HEADLINE_TO_ART_DELAY_MS = 700;
 const HOLD_AFTER_COMPLETE_MS = 2000;
-const PHONE_ART_DISPLAY_WIDTH_PX = 350;
-const PHONE_ART_BOTTOM_OFFSET_PX = 148;
+const PHONE_ART_DISPLAY_WIDTH_PX = 420;
+const PHONE_ART_BOTTOM_OFFSET_PX = 128;
 
 type SequencePhase = "headline" | "art" | "hold";
 
@@ -92,7 +92,7 @@ export function LearnStorySequence() {
           className="pointer-events-none absolute inset-x-0 z-0 flex justify-center"
           style={{ bottom: -PHONE_ART_BOTTOM_OFFSET_PX }}
         >
-          <Art1StackAnimation
+          <Art2StackAnimation
             key={cycle}
             embedded
             displayWidthPx={PHONE_ART_DISPLAY_WIDTH_PX}

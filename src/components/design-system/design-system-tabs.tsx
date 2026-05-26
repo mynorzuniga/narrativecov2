@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PageNavLinks } from "@/components/design-system/page-nav-links";
 import { ColorTab } from "@/components/design-system/color-tab";
 import { ComponentsTab } from "@/components/design-system/components-tab";
 import { SizingTab } from "@/components/design-system/sizing-tab";
@@ -22,6 +23,9 @@ export function DesignSystemTabs() {
 
   return (
     <div className="w-full">
+      <div className="sticky top-4 z-50 mb-8 flex flex-wrap items-center justify-end gap-[0.75rem] rounded-lg bg-background/95 py-2 backdrop-blur-sm">
+        <PageNavLinks />
+      </div>
       <div
         role="tablist"
         aria-label="Design system sections"

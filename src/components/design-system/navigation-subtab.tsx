@@ -1,6 +1,7 @@
 "use client";
 
 import { Art1StackAnimation } from "@/components/art1-stack-animation";
+import { Art2StackAnimation } from "@/components/art2-stack-animation";
 import { Header } from "@/components/header";
 import { LearnStorySequence } from "@/components/learn-story-sequence";
 import { NavigationBar } from "@/components/navigation-bar";
@@ -68,6 +69,30 @@ export function NavigationSubtab() {
 
         <div className="overflow-hidden rounded-lg border border-zinc-200">
           <Art1StackAnimation />
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-foreground">Art 2 stack animation</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-700">
+              art2/man
+            </code>
+            ,{" "}
+            <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-700">
+              bubble1
+            </code>
+            ,{" "}
+            <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-700">
+              bubble2
+            </code>{" "}
+            · multiply blend · spring reveal (man → bubble1 → bubble2)
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-zinc-200">
+          <Art2StackAnimation />
         </div>
       </section>
 
