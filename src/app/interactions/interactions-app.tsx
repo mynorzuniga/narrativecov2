@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type CSSProperties } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 // --- PHONE SCREENS COMPONENTS ---
@@ -216,10 +216,12 @@ const InteractionTwoScreen = () => {
         <div 
           key={offset} 
           className="stripe-element overflow-hidden"
-          style={{ 
-            '--stripe-offset': offset,
-            '--stripe-delay': Math.abs(offset) 
-          }}
+          style={
+            {
+              "--stripe-offset": offset,
+              "--stripe-delay": Math.abs(offset),
+            } as CSSProperties
+          }
         >
           {offset === 0 && (
              <span className="text-white font-semibold text-lg int2-text-fade-out whitespace-nowrap">
