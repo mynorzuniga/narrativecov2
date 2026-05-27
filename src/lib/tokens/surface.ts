@@ -1,5 +1,5 @@
 import { AMBER_SHADES } from "@/lib/colors/amber";
-import { CHARCOAL_COLOR, CHARCOAL_SHADES } from "@/lib/colors/charcoal";
+import { CHARCOAL_BASE_SHADE, CHARCOAL_COLOR, CHARCOAL_SHADES } from "@/lib/colors/charcoal";
 import { CREAM_BASE_SHADE, CREAM_COLOR, CREAM_SHADES } from "@/lib/colors/cream";
 import {
   OXBLOOD_INK_COLOR,
@@ -36,23 +36,23 @@ export const SURFACE_CONTAINER_DEFAULT = {
 
 export const SURFACE_CONTAINER_ACCENT1 = {
   path: "surface/container/accent1",
+  palette: "charcoal",
+  shade: CHARCOAL_BASE_SHADE,
+  hex: CHARCOAL_COLOR,
+  paletteClass: "charcoal-800",
+  tailwindClass: "bg-charcoal-800",
+  swatchClass: "bg-charcoal-800",
+  themeColor: "surface-container-accent1",
+} as const;
+
+export const SURFACE_CONTAINER_ACCENT2 = {
+  path: "surface/container/accent2",
   palette: "oxblood-ink",
   shade: OXBLOOD_INK_BASE_SHADE,
   hex: OXBLOOD_INK_COLOR,
   paletteClass: "oxblood-ink-800",
   tailwindClass: "bg-oxblood-ink-800",
   swatchClass: "bg-oxblood-ink-800",
-  themeColor: "surface-container-accent1",
-} as const;
-
-export const SURFACE_CONTAINER_ACCENT2 = {
-  path: "surface/container/accent2",
-  palette: "charcoal",
-  shade: 800,
-  hex: CHARCOAL_COLOR,
-  paletteClass: "charcoal-800",
-  tailwindClass: "bg-charcoal-800",
-  swatchClass: "bg-charcoal-800",
   themeColor: "surface-container-accent2",
 } as const;
 

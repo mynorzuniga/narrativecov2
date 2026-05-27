@@ -21,6 +21,12 @@ export function PageNavLinks() {
       >
         Preview
       </Link>
+      <Link
+        href="/preview-2"
+        className={`${linkBase} border-charcoal-800 bg-cream-100 text-charcoal-800 hover:bg-cream-200`}
+      >
+        Preview 2
+      </Link>
     </nav>
   );
 }

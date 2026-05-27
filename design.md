@@ -406,6 +406,7 @@ Registers Tailwind colors from token files.
 | `LearnStorySequence` | `src/components/learn-story-sequence.tsx` | Learn screen headline word reveal + art stack loop |
 | `FieldsPreviewContent` | `src/components/fields-preview-content.tsx` | Fields phone preview: sign-in headline, username/password, login CTA |
 | `PreviewContent` | `src/components/preview-content.tsx` | `/preview` phone content: logo, headline + art row, Start CTA |
+| `Preview2Content` | `src/components/preview-2-content.tsx` | `/preview-2` phone content: centered NARRATIVECO mark |
 | `PreviewArtComposition` | `src/components/preview-art-composition.tsx` | Preview art phases: live stack, `man2` → `man3` scale pop |
 | `Art1StackAnimation` | `src/components/art1-stack-animation.tsx` | Layered art1 multiply-blend spring reveal |
 | `Art2StackAnimation` | `src/components/art2-stack-animation.tsx` | Layered art2 multiply-blend spring reveal |
@@ -512,6 +513,17 @@ Registers Tailwind colors from token files.
 - **Body copy:** below headline (`mt-[1rem]`, full width) — Body Big (`1.25rem`), `font-normal`, `font-serif`, `leading-normal`, `text-text-default-body`: “You are a couple of steps a way from getting better at telling stories. Let's start this journey together.”
 - **CTA:** full-width primary `CtaButton` (“Start”), `mt-[1.25rem]` below body copy. Click slides headline, body, and CTA off-screen to the left (`x` `-105%`, `opacity` `0`, `0.55s`, `easeInOut`); logo stays. In parallel, art **animates from its resting top-right position** (`x` `20px`, `y` `-120px`, `scale` `1`) to center (`scale` `1.55` with subtle spring bounce: stiffness `110`, damping `15`; `x`/`y` use `0.55s` `easeInOut`), final position **40px above** measured vertical center. When focus motion completes, `PreviewArtComposition` switches from the full stack to `/art2/man2.jpg` with a scale pop (`0.88`→`1`, opacity `0`→`1`; spring stiffness `200`, damping `20`, mass `0.85`); when `man2` settles, it switches to `/art2/man3.jpg` with the same pop; when `man3` settles, it shifts **40px right** (`0.55s`, `easeInOut`). Then **pull transition** (`0.65s`, `easeInOut`): `man3` exits left off-frame while a full-bleed page (`bg-surface-container-accent1`) slides in from the right in the same motion (`man3` `z-30`, panel `z-10`); logo hidden during pull. On complete, content is the accent page only.
 - **Entrance:** headline, body copy, and CTA fade in with subtle upward motion (`opacity` 0→1, `y` `6px`→0, slow spring: stiffness `62`, damping `26`, mass `1.85`); body delayed `0.32s`, CTA `0.6s`. Art uses slower preview spring (stiffness `70`, mass `1.7`) on man; bubble stagger `0s` / `0.55s` / `1.05s` with scale pop.
+
+### `Preview2Content`
+
+- Phone content for `/preview-2`; no `Header` or `NavigationBar` — full-bleed `bg-surface-page-default`, horizontal padding `px-[1rem]`, inside `PhonePreviewFrame`.
+- **Brand mark:** “NARRATIVECO” centered at top (`pt-[1rem]`) — default logo size (`LOGO_DEFAULT_SIZE`, `1.125rem`); **`ibmPlexMono.className`**; `font-medium`, `leading-tight`, `text-center`. “NARRATIVE” `text-text-default-heading`; “CO” `text-text-default-accent`.
+- **Headline** (`mt-[2rem]` below mark): “Every great storyteller needs a beginning” — Heading 1 (`3rem`), `font-semibold`, `font-serif`, `leading-tight`; body `text-text-default-heading`, word “beginning” `text-text-default-accent`.
+- **Body** (`mt-[1rem]` below headline): “We just need the basic to start your story.” — Body Big (`1.25rem`), `font-normal`, `font-serif`, `leading-normal`, `text-text-default-body`.
+- **Fields** (`mt-[1.25rem]`, `space-y-[1rem]`): `TextField` with label “Email” (`type="email"`); `TextField` with label “Phone” (`type="tel"`).
+- **CTA** (pinned to bottom via `mt-auto`, `pb-[1.5rem]`, `pt-[1.25rem]`): full-width primary `CtaButton` (“Start”).
+- **Entrance** (on mount): headline, body, and fields fade in with subtle right-to-left motion (`opacity` 0→1, `x` `14px`→0, `0.55s` ease; delays `0` / `0.14s` / `0.28s` / `0.38s` for headline, body, email, phone). CTA enters from below the frame (`y` `120px`→0, no opacity change; spring stiffness `320`, damping `30`, mass `0.85`, delay `0.48s` — subtle bounce).
+- **Start interaction** (Interaction 1–style liquid transition): primary `CtaButton` click swaps to a `3rem` square blob at the CTA position (`bg-surface-cta-primary`, `0.5rem` radius) — **no** full-width bar phase. Then `3s` morph (`cubic-bezier(0.65, 0, 0.35, 1)`): keyframes `0%`/`25%` hold square at `bottom: 1.5rem` → `50%` rise to center (`bottom: 50%`, rotate `180deg`) → `70%` / `100%` organic expand. Liquid is `position: absolute` on the **full phone content root**. Label “Start” fades out on the blob (`text-text-cta-primary`, Body Big). Liquid remains on screen after animation completes; no overlay copy or reset control.
 
 ### `PreviewArtComposition`
 

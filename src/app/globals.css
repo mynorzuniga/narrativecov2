@@ -57,8 +57,8 @@
 
   --color-surface-page-default: var(--color-cream-100);
   --color-surface-container-default: var(--color-cream-100);
-  --color-surface-container-accent1: var(--color-oxblood-ink-800);
-  --color-surface-container-accent2: var(--color-charcoal-800);
+  --color-surface-container-accent1: var(--color-charcoal-800);
+  --color-surface-container-accent2: var(--color-oxblood-ink-800);
   --color-surface-container-disabled: var(--color-charcoal-200);
   --color-surface-container-warning: var(--color-amber-50);
   --color-surface-container-success: var(--color-oxblood-ink-600);
