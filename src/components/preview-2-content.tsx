@@ -263,8 +263,6 @@ export function Preview2Content() {
   const accentColor = useTransform(progress, [0, 1], ["#891616", "#fbf6ee"]);
   const bodyColor = useTransform(progress, [0, 1], ["#686363", "#f6ddd9"]);
   // Paper textures move proportionally with drag but don't fully exit until snap
-  const paperTopY = useTransform(progress, [0, 1], [0, -180]);
-  const paperBottomY = useTransform(progress, [0, 1], [0, 180]);
 
   const handleDragEnd = () => {
     const containerW = swipeContainerRef.current?.offsetWidth ?? 1;
@@ -450,33 +448,6 @@ export function Preview2Content() {
         />
       )}
 
-      {/* Paper bg images — above overlay, behind content */}
-      {animationState === "intro" && (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <motion.img
-            src="/paper/paper top.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 z-[1] w-full object-cover object-top"
-            style={{ top: "-4rem", y: paperTopY }}
-            initial={{ y: "-100%" }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <motion.img
-            src="/paper/paper bottom.png"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 z-[1] w-full object-cover object-bottom"
-            style={{ bottom: "-1rem", y: paperBottomY }}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-          />
-        </>
-      )}
 
       {/* Logo — always visible */}
       <div className="relative z-10 flex shrink-0 justify-center pt-[1rem]">

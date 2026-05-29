@@ -1,44 +1,23 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Flame, X } from "@phosphor-icons/react";
-
-// Letter-fall animation for heading
-const letterVariants = {
-  hidden: { y: -28, opacity: 0 },
-  visible: (i: number) => ({
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 18,
-      delay: 0.35 + i * 0.04,
-    },
-  }),
-};
-
-// Subtle right-to-left fade (matches onboarding body)
-const fadeFromRight = {
-  hidden: { opacity: 0, x: 14 },
-  visible: (delay: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.55, ease: [0.25, 0.1, 0.25, 1] as const, delay },
-  }),
-};
+import { Bell, X } from "@phosphor-icons/react";
 import { PhonePreviewFrame } from "@/components/design-system/phone-preview-frame";
 import { Preview2Content } from "@/components/preview-2-content";
 import { Header } from "@/components/header";
 import { NavigationBar } from "@/components/navigation-bar";
-import { BODY_STYLES, HEADING_STYLES } from "@/lib/typography/scale";
+import { BODY_STYLES, DISPLAY_STYLES, HEADING_STYLES } from "@/lib/typography/scale";
 import { ICON_SIZE_PX, ICON_WEIGHT_DEFAULT } from "@/lib/icons/scale";
 
 const bodyStandard = BODY_STYLES.find((s) => s.id === "body")!;
 const bodyBig = BODY_STYLES.find((s) => s.id === "big")!;
-const heading1 = HEADING_STYLES.find((s) => s.id === "h1")!;
 const heading4 = HEADING_STYLES.find((s) => s.id === "h4")!;
+const display2 = DISPLAY_STYLES.find((s) => s.id === "display2")!;
+
+// 8 dot angles (clockwise from top), offset 22.5° so none sit at cardinal points
+const DOT_ANGLES = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5];
+const CIRCLE_R = 4; // rem
 
 type Scenario = "onboarding" | "open-close" | "points";
 
@@ -135,124 +114,189 @@ function OpenCloseContent() {
 }
 
 function PointsContent() {
+  const [phase, setPhase] = useState<"idle" | "ready" | "closing">("idle");
   const [open, setOpen] = useState(true);
+  const [exitTarget, setExitTarget] = useState({ x: 0, y: 0 });
+  // Position of circle center relative to the root div — used for the exit dots layer
+  const [circleLayerPos, setCircleLayerPos] = useState({ x: 0, y: 0 });
+  const flameRef = useRef<HTMLSpanElement>(null);
+  const circleRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase("ready"), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  function handleClose() {
+    if (phase !== "ready") return;
+    if (flameRef.current && circleRef.current && rootRef.current) {
+      const flame = flameRef.current.getBoundingClientRect();
+      const circle = circleRef.current.getBoundingClientRect();
+      const root = rootRef.current.getBoundingClientRect();
+      const circleX = circle.left + circle.width / 2;
+      const circleY = circle.top + circle.height / 2;
+      const flameX = flame.left + flame.width / 2;
+      const flameY = flame.top + flame.height / 2;
+      // Circle center relative to root (for the exit dots layer position)
+      setCircleLayerPos({ x: circleX - root.left, y: circleY - root.top });
+      // Exit target relative to circle center, corrected for dot pivot offset at gather angle
+      const GATHER_RAD = (-72 * Math.PI) / 180;
+      const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const circleRPx = CIRCLE_R * remPx;
+      setExitTarget({
+        x: flameX - circleX - circleRPx * Math.cos(GATHER_RAD),
+        y: flameY - circleY - circleRPx * Math.sin(GATHER_RAD),
+      });
+    }
+    setPhase("closing");
+    setTimeout(() => setOpen(false), 420);
+  }
 
   return (
-    <div className="relative flex h-full flex-col bg-surface-page-default">
-      <Header />
+    <div ref={rootRef} className="relative flex h-full flex-col bg-surface-page-default">
+      <Header flameRef={flameRef} />
       <div className="min-h-0 flex-1" />
-      {/* Charcoal overlay */}
+
+      {/* Tap-outside overlay */}
       <AnimatePresence>
         {open && (
           <motion.div
-            className="pointer-events-none absolute inset-0 z-[9]"
-            style={{ backgroundColor: "var(--color-charcoal-800)" }}
+            className="absolute inset-0 z-[9]"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.2 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.3 }}
+            onClick={handleClose}
           />
         )}
       </AnimatePresence>
 
-      {/* Paper bottom 2 — slides in from below, scale bounces on arrival */}
+      {/* Accent1 sheet */}
       <AnimatePresence>
         {open && (
-        <motion.div
-          className="absolute inset-x-0 bottom-0 z-10"
-          initial={{ y: "100%", scale: 1 }}
-          animate={{ y: 0, scale: [1, 1.06, 1] }}
-          exit={{ y: "100%" }}
-          transition={{
-            y: { type: "spring" as const, stiffness: 260, damping: 28 },
-            scale: {
-              duration: 0.8,
-              times: [0, 0.6, 1],
-              ease: ["easeIn", [0.34, 1.56, 0.64, 1]] as const,
-            },
-          }}
-        >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/paper/paper bottom 2.png"
-          alt=""
-          aria-hidden
-          className="w-full"
-        />
-
-        {/* Content overlay */}
-        <div className="absolute inset-0 flex flex-col px-[1.5rem] pt-[3.5rem] pb-[1rem]">
-          {/* Close button */}
-          <div className="flex justify-end">
-            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-text-default-heading">
-              <X size={20} weight={ICON_WEIGHT_DEFAULT} aria-hidden />
-            </button>
-          </div>
-
-          {/* Heading — each letter falls into place */}
-          <h2
-            className="mt-[0.5rem] font-heading font-semibold leading-snug text-text-default-heading"
-            style={{ fontSize: heading1.size }}
-            aria-label="Going Strong!"
-          >
-            {"Going ".split("").map((char, i) => (
-              <motion.span
-                key={`g-${i}`}
-                custom={i}
-                variants={letterVariants}
-                initial="hidden"
-                animate="visible"
-                className="inline-block"
-              >
-                {char === " " ? "\u00a0" : char}
-              </motion.span>
-            ))}
-            {"Strong!".split("").map((char, i) => (
-              <motion.span
-                key={`s-${i}`}
-                custom={"Going ".length + i}
-                variants={letterVariants}
-                initial="hidden"
-                animate="visible"
-                className="inline-block text-text-default-accent"
-              >
-                {char}
-              </motion.span>
-            ))}
-          </h2>
-
-          {/* Flame + streak number */}
           <motion.div
-            className="mt-[0.75rem] flex items-center gap-[0.5rem]"
-            variants={fadeFromRight}
-            initial="hidden"
-            animate="visible"
-            custom={0.9}
+            className="absolute inset-x-0 bottom-0 z-10 bg-surface-container-accent1"
+            style={{ height: "60%", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem", overflow: "visible" }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
           >
-            <Flame size={48} weight="bold" className="text-text-default-accent" aria-hidden />
-            <span
-              className="font-heading font-semibold text-text-default-heading"
-              style={{ fontSize: heading4.size }}
-            >
-              7 Days Streak
-            </span>
-          </motion.div>
+            {/* Close button */}
+            <div className="flex justify-end px-[1rem] pt-[1rem]">
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={handleClose}
+                className="inline-flex text-text-accent1-complementary"
+              >
+                <X size={ICON_SIZE_PX.sm} weight={ICON_WEIGHT_DEFAULT} aria-hidden />
+              </button>
+            </div>
 
-          {/* Body copy */}
-          <motion.p
-            className="mt-[0.75rem] font-serif font-normal leading-snug text-text-default-body"
-            style={{ fontSize: bodyBig.size }}
-            variants={fadeFromRight}
-            initial="hidden"
-            animate="visible"
-            custom={1.05}
-          >
-            Keep going and you will become a great storyteller.
-          </motion.p>
-        </div>
-        </motion.div>
+            {/* Circle composition */}
+            <div className="flex justify-center pt-[2rem]">
+              <div ref={circleRef} className="relative" style={{ width: "12rem", height: "12rem" }}>
+
+                {/* Entry dots — hidden when closing (exit layer takes over) */}
+                {phase !== "closing" && DOT_ANGLES.map((angle, i) => {
+                  const endRotate = angle - 90;
+                  return (
+                    <motion.div
+                      key={i}
+                      className="absolute"
+                      style={{ left: "50%", top: "50%", width: 0, height: 0, transformOrigin: "0 0" }}
+                      initial={{ rotate: -90 }}
+                      animate={phase !== "idle" ? { rotate: endRotate } : {}}
+                      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] as const, delay: i * 0.055 }}
+                    >
+                      <motion.div
+                        className="absolute rounded-full"
+                        style={{ left: `${CIRCLE_R}rem`, top: "-0.4375rem", width: "0.875rem", height: "0.875rem", backgroundColor: "#D29790" }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.01, delay: i * 0.055 }}
+                      />
+                    </motion.div>
+                  );
+                })}
+
+                {/* "7" — pops in, fades out on close */}
+                <motion.span
+                  className="absolute inset-0 flex items-center justify-center font-heading font-semibold text-text-accent1-heading"
+                  style={{ fontSize: display2.size, lineHeight: 1 }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={phase === "closing"
+                    ? { scale: 0.6, opacity: 0 }
+                    : phase === "ready" ? { scale: 1, opacity: 1 } : {}}
+                  transition={phase === "closing"
+                    ? { duration: 0.25, ease: [0.4, 0, 1, 1] }
+                    : { type: "spring", stiffness: 380, damping: 14, delay: 0.25 }}
+                >
+                  7
+                </motion.span>
+
+              </div>
+            </div>
+
+            {/* Text below the circle */}
+            <div className="flex flex-col items-center gap-[0.5rem] px-[2rem] pt-[1rem]">
+              <motion.p
+                className="font-heading font-semibold leading-snug text-text-accent1-heading text-center"
+                style={{ fontSize: heading4.size }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={phase === "closing" ? { opacity: 0, y: -8 } : phase === "ready" ? { opacity: 1, y: 0 } : {}}
+                transition={phase === "closing" ? { duration: 0.2 } : { duration: 0.55, ease: [0.25, 0.1, 0.25, 1], delay: 0.5 }}
+              >
+                Days Streak
+              </motion.p>
+              <motion.p
+                className="font-serif font-normal leading-snug text-text-accent1-body text-center"
+                style={{ fontSize: bodyBig.size }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={phase === "closing" ? { opacity: 0, y: -8 } : phase === "ready" ? { opacity: 1, y: 0 } : {}}
+                transition={phase === "closing" ? { duration: 0.2, delay: 0.05 } : { duration: 0.55, ease: [0.25, 0.1, 0.25, 1], delay: 0.65 }}
+              >
+                Keep going to become a great storyteller.
+              </motion.p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Exit dots layer — rendered outside the container so the container slide doesn't affect them */}
+      {phase === "closing" && DOT_ANGLES.map((angle, i) => {
+        const endRotate = angle - 90;
+        const ri = DOT_ANGLES.length - 1 - i;
+        const UNSWEEP_STAGGER = 0.07;
+        const UNSWEEP_DUR = 0.42;
+        const unsweepDelay = ri * UNSWEEP_STAGGER;
+        const shootDelay = unsweepDelay + UNSWEEP_DUR - 0.08;
+        return (
+          <motion.div
+            key={`exit-${i}`}
+            className="pointer-events-none absolute z-20"
+            style={{ left: circleLayerPos.x, top: circleLayerPos.y, width: 0, height: 0 }}
+            animate={{ x: exitTarget.x, y: exitTarget.y, opacity: 0 }}
+            transition={{ duration: 0.38, ease: [0.4, 0, 0.8, 1] as const, delay: shootDelay }}
+          >
+            <motion.div
+              className="absolute"
+              style={{ width: 0, height: 0, transformOrigin: "0 0" }}
+              initial={{ rotate: endRotate }}
+              animate={{ rotate: -72 }}
+              transition={{ duration: UNSWEEP_DUR, ease: [0.4, 0, 0.2, 1] as const, delay: unsweepDelay }}
+            >
+              <div
+                className="absolute rounded-full"
+                style={{ left: `${CIRCLE_R}rem`, top: "-0.4375rem", width: "0.875rem", height: "0.875rem", backgroundColor: "#D29790" }}
+              />
+            </motion.div>
+          </motion.div>
+        );
+      })}
+
       <NavigationBar />
     </div>
   );

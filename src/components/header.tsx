@@ -14,9 +14,10 @@ const iconButtonClass =
 
 type HeaderProps = {
   onBellClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  flameRef?: React.RefObject<HTMLSpanElement | null>;
 };
 
-export function Header({ onBellClick }: HeaderProps = {}) {
+export function Header({ onBellClick, flameRef }: HeaderProps = {}) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const handleBellClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -31,12 +32,14 @@ export function Header({ onBellClick }: HeaderProps = {}) {
     <>
       <header className="grid h-[3rem] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-text-default-complementary bg-surface-page-default px-[1rem]">
         <div className="flex items-center gap-[0.25rem]">
-          <Flame
-            size={ICON_SIZE_PX.sm}
-            weight={ICON_WEIGHT_DEFAULT}
-            className="text-text-default-accent"
-            aria-hidden
-          />
+          <span ref={flameRef} className="inline-flex">
+            <Flame
+              size={ICON_SIZE_PX.sm}
+              weight={ICON_WEIGHT_DEFAULT}
+              className="text-text-default-accent"
+              aria-hidden
+            />
+          </span>
           <span
             className="font-heading font-medium leading-none text-text-default-heading"
             style={{ fontSize: bodyStandard.size }}
