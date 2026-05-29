@@ -17,7 +17,7 @@ export function FieldsPreviewContent() {
 
       <div className="mt-[calc(3rem+2.5rem)] flex min-h-0 flex-1 flex-col">
         <h1
-          className="shrink-0 font-serif font-semibold leading-tight text-text-default-heading"
+          className="shrink-0 font-heading font-semibold leading-tight text-text-default-heading"
           style={{ fontSize: display2.size }}
         >
           <span className="text-text-default-accent">Start</span> Your Journey

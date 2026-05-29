@@ -65,7 +65,7 @@ export function LearnStorySequence() {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-[1rem] pt-[0.75rem]">
       <h1
-        className="relative z-10 shrink-0 font-serif font-semibold leading-tight text-text-default-heading"
+        className="relative z-10 shrink-0 font-heading font-semibold leading-tight text-text-default-heading"
         style={{ fontSize: display2.size }}
         aria-live="polite"
       >

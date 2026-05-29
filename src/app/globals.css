@@ -12,7 +12,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-eb-garamond), "EB Garamond", Georgia, serif;
+  --font-serif: "EB Garamond", Georgia, serif;
+  --font-heading: "Quentin", Georgia, serif;
   --font-logo: var(--font-ibm-plex-mono);
 
   --color-oxblood-ink-50: #fff7f6;
@@ -106,6 +107,15 @@
   --color-text-field-default: var(--color-charcoal-800);
   --color-text-field-placeholder: var(--color-charcoal-500);
   --color-text-field-disabled: var(--color-charcoal-500);
+}
+
+/* Quentin — display/heading font */
+@font-face {
+  font-family: "Quentin";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/Quentin.ttf") format("truetype");
 }
 
 html {

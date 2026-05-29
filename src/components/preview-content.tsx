@@ -230,7 +230,7 @@ export function PreviewContent() {
               transition={isExiting ? exitEase : { duration: 0 }}
             >
               <motion.h1
-                className="min-w-0 font-serif font-semibold leading-none text-text-default-heading"
+                className="min-w-0 font-heading font-semibold leading-none text-text-default-heading"
                 style={{ fontSize: display2.size }}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}

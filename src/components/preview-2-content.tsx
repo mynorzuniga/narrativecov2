@@ -1,16 +1,18 @@
 "use client";
 
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { ArrowRight } from "@phosphor-icons/react";
 import { CtaButton } from "@/components/cta-button";
+import { ICON_SIZE_PX, ICON_WEIGHT_DEFAULT } from "@/lib/icons/scale";
 import { TextField } from "@/components/text-field";
-import { ibmPlexMono } from "@/lib/typography/fonts";
 import {
   BODY_STYLES,
+  DISPLAY_STYLES,
   HEADING_STYLES,
-  LOGO_DEFAULT_SIZE,
 } from "@/lib/typography/scale";
 
+const display2 = DISPLAY_STYLES.find((s) => s.id === "display2")!;
 const heading1 = HEADING_STYLES.find((s) => s.id === "h1")!;
 const heading4 = HEADING_STYLES.find((s) => s.id === "h4")!;
 const bodyBig = BODY_STYLES.find((s) => s.id === "big")!;
@@ -48,17 +50,18 @@ const entranceDelays = {
   phone: 0.38,
 } as const;
 
+const slideTransition = { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const };
+
 // Liquid morph lasts 3s, then we fade back to page bg over 1.8s
 const LIQUID_DURATION_MS = 3000;
-const FADE_DELAY_MS = LIQUID_DURATION_MS; // start fade right as liquid fills
 
-type AnimationState = "idle" | "animating" | "fading" | "done";
+type AnimationState = "intro" | "fields" | "animating" | "fading" | "done";
 
 // Row height and gap for the 3 containers
 const ROW_H = "3.5rem";
-const ROW_GAP = "1rem";
-// 3.5rem + 1rem at 16px/rem
-const ROW_STEP_PX = 72;
+const ROW_GAP = "0.5rem";
+// 3.5rem + 0.5rem at 16px/rem
+const ROW_STEP_PX = 64;
 
 function RowText({ n, label, enterDelay, fadeOut }: {
   n: string;
@@ -78,7 +81,7 @@ function RowText({ n, label, enterDelay, fadeOut }: {
       }
     >
       <span
-        className="flex h-[2rem] w-[2rem] shrink-0 items-center justify-center rounded-full border font-serif font-medium text-text-accent1-heading"
+        className="flex h-[2rem] w-[2rem] shrink-0 items-center justify-center rounded-full border font-heading font-medium text-text-accent1-heading"
         style={{
           fontSize: heading4.size,
           borderColor: "var(--color-text-accent1-complementary)",
@@ -87,7 +90,7 @@ function RowText({ n, label, enterDelay, fadeOut }: {
       >
         {n}
       </span>
-      <span className="font-serif font-medium text-text-accent1-heading" style={{ fontSize: heading4.size }}>
+      <span className="font-heading font-medium text-text-accent1-heading" style={{ fontSize: heading4.size }}>
         {label}
       </span>
     </motion.div>
@@ -140,8 +143,8 @@ function Screen2({ done, onNext, onFusingComplete }: {
   return (
     <div className="flex min-h-0 flex-1 flex-col px-0 pt-[2rem]">
       <motion.h1
-        className="shrink-0 font-serif font-semibold leading-tight text-text-default-heading"
-        style={{ fontSize: heading1.size }}
+              className="shrink-0 font-heading font-semibold leading-snug text-text-default-heading"
+              style={{ fontSize: heading1.size }}
         variants={fadeFromRight}
         initial="hidden"
         animate={reversing ? { opacity: 0 } : "visible"}
@@ -151,7 +154,7 @@ function Screen2({ done, onNext, onFusingComplete }: {
         <span className="text-text-default-accent">How your day</span> will look like
       </motion.h1>
       <motion.p
-        className="mt-[1rem] shrink-0 font-serif font-normal leading-normal text-text-default-body"
+        className="mt-[1rem] shrink-0 font-serif font-normal leading-snug text-text-default-body"
         style={{ fontSize: bodyBig.size }}
         variants={fadeFromRight}
         initial="hidden"
@@ -225,7 +228,7 @@ function Screen2({ done, onNext, onFusingComplete }: {
             animate={reversing ? { y: 120 } : { y: 0 }}
             transition={reversing
               ? { type: "spring" as const, stiffness: 20, damping: 14, mass: 3 }
-              : { type: "spring" as const, stiffness: 90, damping: 22, mass: 1.2, delay: 3.8 }
+              : { type: "spring" as const, stiffness: 90, damping: 22, mass: 1.2, delay: 2.2 }
             }
           >
             <CtaButton variant="primary" className="w-full" onClick={handleNext}>Next</CtaButton>
@@ -237,12 +240,55 @@ function Screen2({ done, onNext, onFusingComplete }: {
 }
 
 export function Preview2Content() {
-  const [animationState, setAnimationState] = useState<AnimationState>("idle");
+  const [animationState, setAnimationState] = useState<AnimationState>("intro");
   const [lineBottom, setLineBottom] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  // Swipe drag motion values
+  const dragX = useMotionValue(0);
+  const swipeContainerRef = useRef<HTMLDivElement>(null);
+  const swipeButtonRef = useRef<HTMLDivElement>(null);
+
+  // progress 0→1 mapped from drag position relative to available track width
+  const progress = useTransform(dragX, (x) => {
+    if (!swipeContainerRef.current || !swipeButtonRef.current) return 0;
+    const max = swipeContainerRef.current.offsetWidth - swipeButtonRef.current.offsetWidth;
+    return Math.max(0, Math.min(1, x / Math.max(1, max)));
+  });
+
+  // Background overlay opacity (accent2 bg fades in)
+  const bgOverlayOpacity = useTransform(progress, [0, 1], [0, 1]);
+  // Text colors — charcoal-800 → cream-100
+  const headingColor = useTransform(progress, [0, 1], ["#312c2c", "#fbf6ee"]);
+  const accentColor = useTransform(progress, [0, 1], ["#891616", "#fbf6ee"]);
+  const bodyColor = useTransform(progress, [0, 1], ["#686363", "#f6ddd9"]);
+  // Paper textures move proportionally with drag but don't fully exit until snap
+  const paperTopY = useTransform(progress, [0, 1], [0, -180]);
+  const paperBottomY = useTransform(progress, [0, 1], [0, 180]);
+
+  const handleDragEnd = () => {
+    const containerW = swipeContainerRef.current?.offsetWidth ?? 1;
+    const buttonW = swipeButtonRef.current?.offsetWidth ?? 0;
+    const max = containerW - buttonW;
+    const p = Math.max(0, Math.min(1, dragX.get() / Math.max(1, max)));
+    if (p > 0.85) {
+      animate(dragX, max, { duration: 0.12 });
+      setTimeout(() => {
+        setAnimationState("fields");
+        dragX.set(0);
+      }, 220);
+    } else {
+      animate(dragX, 0, { type: "spring" as const, stiffness: 400, damping: 30 });
+    }
+  };
+
+  const handleSwipeToStart = () => {
+    if (animationState !== "intro") return;
+    setAnimationState("fields");
+  };
+
   const handleStartClick = () => {
-    if (animationState !== "idle") return;
+    if (animationState !== "fields") return;
     setAnimationState("animating");
   };
 
@@ -262,8 +308,6 @@ export function Preview2Content() {
     }, LIQUID_DURATION_MS);
     return () => clearTimeout(timer);
   }, [animationState]);
-
-  const isAnimating = animationState === "animating" || animationState === "fading" || animationState === "done";
 
   return (
     <div ref={rootRef} className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface-page-default px-[1rem]">
@@ -377,7 +421,7 @@ export function Preview2Content() {
           aria-hidden
         >
           <span
-            className="preview2-cta-text-fade-out whitespace-nowrap font-serif font-semibold text-text-cta-primary"
+            className="preview2-cta-text-fade-out whitespace-nowrap font-heading font-semibold text-text-cta-primary"
             style={{ fontSize: bodyBig.size }}
           >
             Start
@@ -385,7 +429,7 @@ export function Preview2Content() {
         </div>
       )}
 
-      {/* Full-frame accent overlay — fades away to reveal next screen */}
+      {/* Full-frame accent overlay — fades away to reveal step 3 */}
       <AnimatePresence>
         {animationState === "fading" && (
           <motion.div
@@ -398,88 +442,190 @@ export function Preview2Content() {
         )}
       </AnimatePresence>
 
+      {/* Accent2 background overlay — behind textures */}
+      {animationState === "intro" && (
+        <motion.div
+          className="pointer-events-none absolute inset-0 z-0 bg-surface-container-accent2"
+          style={{ opacity: bgOverlayOpacity }}
+        />
+      )}
+
+      {/* Paper bg images — above overlay, behind content */}
+      {animationState === "intro" && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <motion.img
+            src="/paper/paper top.png"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 z-[1] w-full object-cover object-top"
+            style={{ top: "-4rem", y: paperTopY }}
+            initial={{ y: "-100%" }}
+            animate={{ y: 0 }}
+            transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <motion.img
+            src="/paper/paper bottom.png"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 z-[1] w-full object-cover object-bottom"
+            style={{ bottom: "-1rem", y: paperBottomY }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+          />
+        </>
+      )}
+
       {/* Logo — always visible */}
       <div className="relative z-10 flex shrink-0 justify-center pt-[1rem]">
         <span
-          className={`${ibmPlexMono.className} text-center font-medium leading-tight`}
-          style={{ fontSize: LOGO_DEFAULT_SIZE }}
+          className="text-center font-heading font-medium leading-none"
+          style={{ fontSize: bodyBig.size }}
         >
-          <span className="text-text-default-heading">NARRATIVE</span>
-          <span className="text-text-default-accent">CO</span>
+          <motion.span style={{ color: headingColor }}>Narrative</motion.span>
+          <motion.span style={{ color: accentColor }}>Co</motion.span>
         </span>
       </div>
 
-      {/* Screen 1: stays visible under the liquid until it fully covers the frame */}
-      {(animationState === "idle" || animationState === "animating") && (
-        <>
-
-          <div className="mt-[2rem] flex min-h-0 flex-1 flex-col">
-            <motion.h1
-              className="shrink-0 font-serif font-semibold leading-tight text-text-default-heading"
-              style={{ fontSize: heading1.size }}
-              variants={fadeFromRight}
-              initial="hidden"
-              animate="visible"
-              custom={entranceDelays.headline}
+      {/* Horizontally sliding content area — full phone width to avoid cut edges */}
+      <div className="relative mx-[-1rem] min-h-0 flex-1 overflow-hidden">
+        <AnimatePresence mode="sync">
+          {/* Step 1 — intro */}
+          {animationState === "intro" && (
+            <motion.div
+              key="intro"
+              className="absolute inset-0 flex flex-col px-[1rem] pt-[4rem]"
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={slideTransition}
             >
-              Every great storyteller needs a{" "}
-              <span className="text-text-default-accent">beginning</span>
-            </motion.h1>
-
-            <motion.p
-              className="mt-[1rem] shrink-0 font-serif font-normal leading-normal text-text-default-body"
-              style={{ fontSize: bodyBig.size }}
-              variants={fadeFromRight}
-              initial="hidden"
-              animate="visible"
-              custom={entranceDelays.body}
-            >
-              We just need the basic to start your story.
-            </motion.p>
-
-            <div className="mt-[1.25rem] shrink-0 space-y-[1rem]">
-              <motion.div
+              <motion.h1
+                className="shrink-0 font-heading font-semibold leading-snug"
+                style={{ fontSize: display2.size, color: headingColor }}
                 variants={fadeFromRight}
                 initial="hidden"
                 animate="visible"
-                custom={entranceDelays.email}
+                custom={entranceDelays.headline}
               >
-                <TextField label="Email" type="email" placeholder="Email" autoComplete="email" />
-              </motion.div>
-              <motion.div
+                Start Your{" "}
+                <motion.span style={{ color: accentColor }}>Journey</motion.span>
+              </motion.h1>
+
+              <motion.p
+                className="mt-[1rem] shrink-0 font-serif font-normal leading-snug"
+                style={{ fontSize: bodyBig.size, color: bodyColor }}
                 variants={fadeFromRight}
                 initial="hidden"
                 animate="visible"
-                custom={entranceDelays.phone}
+                custom={entranceDelays.body}
               >
-                <TextField label="Phone" type="tel" placeholder="Phone" autoComplete="tel" />
-              </motion.div>
-            </div>
+                You are a couple of steps away from getting better at telling stories. Let&apos;s start this journey together.
+              </motion.p>
 
-            <div className="mt-auto shrink-0 pb-[1.5rem] pt-[1.25rem]">
-              {animationState === "idle" && (
+              <div className="mt-auto shrink-0 pb-[1.5rem] pt-[1.25rem]">
                 <motion.div
                   variants={riseFromBelow}
                   initial="hidden"
                   animate="visible"
-                  className="relative z-30"
+                  ref={swipeContainerRef}
+                  className="relative z-30 overflow-hidden rounded-[0.75rem] border bg-surface-page-default p-[0.5rem]"
+                  style={{ borderColor: "var(--color-line-field-enabled)" }}
                 >
-                  <CtaButton variant="primary" className="w-full" onClick={handleStartClick}>
-                    Start
-                  </CtaButton>
+                  <motion.div
+                    ref={swipeButtonRef}
+                    drag="x"
+                    dragConstraints={swipeContainerRef}
+                    dragElastic={0}
+                    dragMomentum={false}
+                    style={{ x: dragX }}
+                    onDragEnd={handleDragEnd}
+                    className="w-fit cursor-grab active:cursor-grabbing"
+                  >
+                    <CtaButton variant="primary" onClick={undefined}>
+                      Swipe
+                      <ArrowRight
+                        size={ICON_SIZE_PX.md}
+                        weight={ICON_WEIGHT_DEFAULT}
+                        aria-hidden
+                        className="ml-[0.5rem]"
+                      />
+                    </CtaButton>
+                  </motion.div>
                 </motion.div>
-              )}
-            </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2 — fields (stays mounted during liquid morph) */}
+          {(animationState === "fields" || animationState === "animating") && (
+            <motion.div
+              key="fields"
+              className="absolute inset-0 flex flex-col px-[1rem] pt-[2rem]"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              transition={slideTransition}
+            >
+              <motion.h1
+                className="shrink-0 font-heading font-semibold leading-snug text-text-default-heading"
+                style={{ fontSize: heading1.size }}
+                variants={fadeFromRight}
+                initial="hidden"
+                animate="visible"
+                custom={entranceDelays.headline}
+              >
+                Every great storyteller needs a{" "}
+                <span className="text-text-default-accent">beginning</span>
+              </motion.h1>
+
+              <motion.p
+                className="mt-[1rem] shrink-0 font-serif font-normal leading-snug text-text-default-body"
+                style={{ fontSize: bodyBig.size }}
+                variants={fadeFromRight}
+                initial="hidden"
+                animate="visible"
+                custom={entranceDelays.body}
+              >
+                We just need the basics to start your story.
+              </motion.p>
+
+              <div className="mt-[1.25rem] shrink-0 space-y-[1rem]">
+                <motion.div variants={fadeFromRight} initial="hidden" animate="visible" custom={entranceDelays.email}>
+                  <TextField label="Email" type="email" placeholder="Email" autoComplete="email" />
+                </motion.div>
+                <motion.div variants={fadeFromRight} initial="hidden" animate="visible" custom={entranceDelays.phone}>
+                  <TextField label="Phone" type="tel" placeholder="Phone" autoComplete="tel" />
+                </motion.div>
+              </div>
+
+              <div className="mt-auto shrink-0 pb-[1.5rem] pt-[1.25rem]">
+                {animationState === "fields" && (
+                  <motion.div
+                    variants={riseFromBelow}
+                    initial="hidden"
+                    animate="visible"
+                    className="relative z-30"
+                  >
+                    <CtaButton variant="primary" className="w-full" onClick={handleStartClick}>
+                      Start
+                    </CtaButton>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Step 3 — containers, rendered underneath during fading then revealed */}
+        {(animationState === "fading" || animationState === "done") && (
+          <div className="absolute inset-0 flex flex-col overflow-hidden px-[1rem]">
+            <Screen2 done={animationState === "done"} onNext={handleNext} onFusingComplete={handleFusingComplete} />
           </div>
-        </>
-      )}
+        )}
+      </div>
 
-      {/* Screen 2: post-transition content (rendered underneath during fading) */}
-      {(animationState === "fading" || animationState === "done") && (
-        <Screen2 done={animationState === "done"} onNext={handleNext} onFusingComplete={handleFusingComplete} />
-      )}
-
-      {/* Line transition — Interaction 3 style, starts from row 1's measured position */}
+      {/* Line transition — Interaction 3 style */}
       {lineBottom !== null && (
         <div
           className="p2-line-transition"

@@ -40,7 +40,8 @@ Defined in code where noted; semantics here.
 | Page background | `bg-background` | `globals.css` → `#ffffff` |
 | Page text | `text-foreground` | `globals.css` → `#171717` |
 | UI chrome (labels, tabs) | `font-sans` (Geist) | `layout.tsx` |
-| Product typography | `font-serif` (EB Garamond) | `layout.tsx`, `globals.css` |
+| Product typography (body) | `font-serif` (EB Garamond) | `layout.tsx`, `globals.css` |
+| Product typography (headings/display) | `font-heading` (Quentin) | `layout.tsx`, `globals.css` |
 | Logo | `font-logo` (IBM Plex Mono) | `src/lib/typography/fonts.ts`, `globals.css` |
 
 ---
@@ -288,7 +289,7 @@ import { DISPLAY_STYLES, HEADING_STYLES, BODY_STYLES, FONT_WEIGHTS } from "@/lib
 - `text-sm`, `text-base`, `text-xl`, `text-2xl`, etc.
 - `font-bold` (700), `font-light` (300), or any weight ∉ {400, 500, 600}
 - `font-sans` on product body/headings
-- Any product font family other than EB Garamond — except `Logo`, which uses `ibmPlexMono.className` (IBM Plex Mono)
+- Any product font family other than EB Garamond (body) or Quentin (headings/display) — except `Logo`, which uses `ibmPlexMono.className` (IBM Plex Mono)
 
 ---
 
@@ -342,7 +343,8 @@ Registers Tailwind colors from token files.
 |-------|--------|
 | `font-sans` | Geist — UI chrome |
 | `font-mono` | Geist Mono |
-| `font-serif` | EB Garamond — product type |
+| `font-serif` | EB Garamond — body text |
+| `font-heading` | Quentin — headings and display |
 | `font-logo` | IBM Plex Mono — `Logo` only (`ibmPlexMono.className`; `font-logo` token is reference-only) |
 | `{palette}-{shade}` | **Root only** — wired by semantic tokens; not for product UI |
 | `background` / `foreground` | Legacy layout defaults; prefer semantic `surface-*` / `text-*` for product |
@@ -565,7 +567,7 @@ When adding more: implement with **semantic** color tokens from `src/lib/tokens/
 ## Changelog
 
 - **Hybrid doc model:** token values in code only; `design.md` holds rules, semantics, and pointers.
-- Initial system: Oxblood Ink, Charcoal, Amber, Cream; sizing 0.25–5rem; EB Garamond typography; light mode only.
+- Initial system: Oxblood Ink, Charcoal, Amber, Cream; sizing 0.25–5rem; EB Garamond (body) + Quentin (headings/display); light mode only.
 - Semantic surface: `surface/page/default`; `surface/container/*` variants (see `src/lib/tokens/surface.ts`).
 - Semantic text: `text/default/*`, `text/accent1/*`, `text/accent2/*`, `text/disabled/default`, `text/warning/*`, `text/success/*`, `text/cta/*`, `text/field/*` (see `src/lib/tokens/text.ts`).
 - Semantic surface CTA: `surface/cta/*` (see `src/lib/tokens/surface.ts`).

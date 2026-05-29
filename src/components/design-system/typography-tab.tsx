@@ -1,5 +1,6 @@
 import {
   BODY_STYLES,
+  DISPLAY_FONT,
   DISPLAY_STYLES,
   FONT_WEIGHTS,
   HEADING_STYLES,
@@ -16,10 +17,12 @@ function TypeStyleGroup({
   styles,
   previewText,
   leading = "tight",
+  fontClass = "font-serif",
 }: {
   styles: readonly TypeStyle[];
   previewText: (style: TypeStyle) => string;
   leading?: "tight" | "normal";
+  fontClass?: string;
 }) {
   const leadingClass = leading === "normal" ? "leading-normal" : "leading-tight";
   return (
@@ -42,7 +45,7 @@ function TypeStyleGroup({
                   <span className="font-mono font-normal">{fontWeight.weight}</span>
                 </div>
                 <p
-                  className={`${leadingClass} text-foreground`}
+                  className={`${fontClass} ${leadingClass} text-foreground`}
                   style={{
                     fontSize: style.size,
                     fontWeight: fontWeight.weight,
@@ -61,11 +64,15 @@ function TypeStyleGroup({
 
 export function TypographyTab() {
   return (
-    <div className="font-serif">
+    <div>
       <div className="mb-10">
         <h2 className="font-sans text-lg font-semibold text-foreground">Typography</h2>
         <p className="mt-1 font-sans text-sm text-zinc-500">
-          Font family{" "}
+          Headings &amp; display:{" "}
+          <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-700">
+            {DISPLAY_FONT}
+          </code>
+          {" · "}Body:{" "}
           <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-700">
             {TYPOGRAPHY_FONT}
           </code>
@@ -78,6 +85,7 @@ export function TypographyTab() {
         </h3>
         <TypeStyleGroup
           styles={DISPLAY_STYLES}
+          fontClass="font-heading"
           previewText={(style) => style.label}
         />
       </section>
@@ -88,6 +96,7 @@ export function TypographyTab() {
         </h3>
         <TypeStyleGroup
           styles={HEADING_STYLES}
+          fontClass="font-heading"
           previewText={(style) => style.label}
         />
       </section>
@@ -98,6 +107,7 @@ export function TypographyTab() {
         </h3>
         <TypeStyleGroup
           styles={BODY_STYLES}
+          fontClass="font-serif"
           leading="normal"
           previewText={() =>
             "The quick brown fox jumps over the lazy dog."

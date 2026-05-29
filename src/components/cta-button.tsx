@@ -37,7 +37,7 @@ export function CtaButton({
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-text-default-heading/10 opacity-0 transition-opacity group-hover:opacity-100"
       />
-      <span className="relative z-10">{children}</span>
+      <span className="relative z-10 flex items-center">{children}</span>
     </button>
   );
 }

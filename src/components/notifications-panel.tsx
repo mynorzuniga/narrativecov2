@@ -87,7 +87,7 @@ export function NotificationsPanel({ open, onClose }: NotificationsPanelProps) {
             <div className="flex items-center justify-between border-b border-text-default-complementary px-[1rem] py-[1rem]">
               <h2
                 id="notifications-panel-title"
-                className="font-serif font-semibold leading-tight text-text-default-heading"
+                className="font-heading font-semibold leading-tight text-text-default-heading"
                 style={{ fontSize: heading4.size }}
               >
                 Notifications
@@ -110,7 +110,7 @@ export function NotificationsPanel({ open, onClose }: NotificationsPanelProps) {
               {mockNotifications.map((notification) => (
                 <li key={notification.id} className="px-[1rem] py-[1rem]">
                   <p
-                    className="font-serif font-medium leading-snug text-text-default-heading"
+                    className="font-heading font-medium leading-snug text-text-default-heading"
                     style={{ fontSize: bodyStandard.size }}
                   >
                     {notification.title}

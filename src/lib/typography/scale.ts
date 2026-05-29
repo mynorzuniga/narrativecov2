@@ -1,4 +1,5 @@
 export const TYPOGRAPHY_FONT = "EB Garamond";
+export const DISPLAY_FONT = "Quentin";
 export const TYPOGRAPHY_LOGO_FONT = "IBM Plex Mono";
 export const FONT_WEIGHTS = [
   { id: "regular", label: "Regular", weight: 400 },

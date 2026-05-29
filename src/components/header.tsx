@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Flame, User } from "@phosphor-icons/react";
+import { Bell, Flame, User, X } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ICON_SIZE_PX, ICON_WEIGHT_DEFAULT } from "@/lib/icons/scale";
 import { NotificationsPanel } from "@/components/notifications-panel";
@@ -12,8 +12,20 @@ const bodyStandard = BODY_STYLES.find((s) => s.id === "body")!;
 const iconButtonClass =
   "inline-flex items-center justify-center text-text-default-heading";
 
-export function Header() {
+type HeaderProps = {
+  onBellClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+};
+
+export function Header({ onBellClick }: HeaderProps = {}) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const handleBellClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (onBellClick) {
+      onBellClick(e);
+    } else {
+      setNotificationsOpen(true);
+    }
+  };
 
   return (
     <>
@@ -26,7 +38,7 @@ export function Header() {
             aria-hidden
           />
           <span
-            className="font-serif font-medium leading-none text-text-default-heading"
+            className="font-heading font-medium leading-none text-text-default-heading"
             style={{ fontSize: bodyStandard.size }}
           >
             7
@@ -34,7 +46,7 @@ export function Header() {
         </div>
 
         <span
-          className="text-center font-serif font-medium leading-none text-text-default-heading"
+          className="text-center font-heading font-medium leading-none text-text-default-heading"
           style={{ fontSize: bodyBig.size }}
         >
           Narrative
@@ -46,7 +58,7 @@ export function Header() {
             type="button"
             aria-label="Notifications"
             aria-expanded={notificationsOpen}
-            onClick={() => setNotificationsOpen(true)}
+            onClick={handleBellClick}
             className={iconButtonClass}
           >
             <span className="relative inline-flex">
