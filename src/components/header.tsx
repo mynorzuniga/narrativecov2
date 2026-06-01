@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Flame, User, X } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ICON_SIZE_PX, ICON_WEIGHT_DEFAULT } from "@/lib/icons/scale";
 import { NotificationsPanel } from "@/components/notifications-panel";
@@ -22,6 +22,10 @@ type HeaderProps = {
 export function Header({ onBellClick, flameRef, streakCount }: HeaderProps = {}) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const displayCount = streakCount ?? 7;
+  // Track whether the component has fully mounted so the initial render is static
+  const mountedRef = useRef(false);
+  useEffect(() => { mountedRef.current = true; }, []);
+  const shouldAnimate = mountedRef.current;
 
   const handleBellClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (onBellClick) {
@@ -47,9 +51,9 @@ export function Header({ onBellClick, flameRef, streakCount }: HeaderProps = {})
             key={displayCount}
             className="font-heading font-medium leading-none text-text-default-heading"
             style={{ fontSize: bodyStandard.size }}
-            initial={{ scale: 0.5, opacity: 0 }}
+            initial={shouldAnimate ? { scale: 0.3, opacity: 0 } : false}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 14 }}
+            transition={{ type: "spring", stiffness: 480, damping: 10 }}
           >
             {displayCount}
           </motion.span>
