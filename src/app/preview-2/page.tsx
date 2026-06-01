@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X } from "@phosphor-icons/react";
+import { Bell, Flame, X } from "@phosphor-icons/react";
 import { PhonePreviewFrame } from "@/components/design-system/phone-preview-frame";
 import { Preview2Content } from "@/components/preview-2-content";
 import { Header } from "@/components/header";
@@ -114,14 +114,18 @@ function OpenCloseContent() {
 }
 
 function PointsContent() {
-  const [phase, setPhase] = useState<"idle" | "ready" | "closing">("idle");
+  const [phase, setPhase] = useState<"idle" | "ready" | "converge" | "closing">("idle");
   const [open, setOpen] = useState(true);
-  const [exitTarget, setExitTarget] = useState({ x: 0, y: 0 });
-  // Position of circle center relative to the root div — used for the exit dots layer
-  const [circleLayerPos, setCircleLayerPos] = useState({ x: 0, y: 0 });
-  const flameRef = useRef<HTMLSpanElement>(null);
-  const circleRef = useRef<HTMLDivElement>(null);
+
   const rootRef = useRef<HTMLDivElement>(null);
+  const circleRef = useRef<HTMLDivElement>(null);
+  const headerFlameRef = useRef<HTMLSpanElement>(null);
+
+  const [flamePositions, setFlamePositions] = useState<{ x: number; y: number }[]>([]);
+  const [flameExpandedPositions, setFlameExpandedPositions] = useState<{ x: number; y: number }[]>([]);
+  const [circleCenter, setCircleCenter] = useState({ x: 0, y: 0 });
+  const [headerFlamePos, setHeaderFlamePos] = useState({ x: 0, y: 0 });
+  const [headerCount, setHeaderCount] = useState(6);
 
   useEffect(() => {
     const t = setTimeout(() => setPhase("ready"), 50);
@@ -130,32 +134,50 @@ function PointsContent() {
 
   function handleClose() {
     if (phase !== "ready") return;
-    if (flameRef.current && circleRef.current && rootRef.current) {
-      const flame = flameRef.current.getBoundingClientRect();
-      const circle = circleRef.current.getBoundingClientRect();
-      const root = rootRef.current.getBoundingClientRect();
-      const circleX = circle.left + circle.width / 2;
-      const circleY = circle.top + circle.height / 2;
-      const flameX = flame.left + flame.width / 2;
-      const flameY = flame.top + flame.height / 2;
-      // Circle center relative to root (for the exit dots layer position)
-      setCircleLayerPos({ x: circleX - root.left, y: circleY - root.top });
-      // Exit target relative to circle center, corrected for dot pivot offset at gather angle
-      const GATHER_RAD = (-72 * Math.PI) / 180;
-      const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      const circleRPx = CIRCLE_R * remPx;
-      setExitTarget({
-        x: flameX - circleX - circleRPx * Math.cos(GATHER_RAD),
-        y: flameY - circleY - circleRPx * Math.sin(GATHER_RAD),
-      });
-    }
-    setPhase("closing");
-    setTimeout(() => setOpen(false), 420);
+
+    const rootRect = rootRef.current!.getBoundingClientRect();
+    const circleRect = circleRef.current!.getBoundingClientRect();
+    const headerRect = headerFlameRef.current!.getBoundingClientRect();
+    const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const circleRPx = CIRCLE_R * remPx;
+    const iconHalf = ICON_SIZE_PX.md / 2;
+
+    const cx = circleRect.left + circleRect.width / 2 - rootRect.left;
+    const cy = circleRect.top + circleRect.height / 2 - rootRect.top;
+
+    const rads = DOT_ANGLES.map(angle => (angle - 90) * Math.PI / 180);
+    const positions = rads.map(rad => ({
+      x: cx + circleRPx * Math.cos(rad),
+      y: cy + circleRPx * Math.sin(rad) - iconHalf,
+    }));
+    setFlamePositions(positions);
+
+    const OVERSHOOT_R = 40; // px outward overshoot for the expand bounce
+    setFlameExpandedPositions(
+      rads.map((rad, i) => ({
+        x: positions[i].x + OVERSHOOT_R * Math.cos(rad),
+        y: positions[i].y + OVERSHOOT_R * Math.sin(rad),
+      }))
+    );
+
+    setCircleCenter({ x: cx - iconHalf, y: cy - iconHalf });
+    setHeaderFlamePos({
+      x: headerRect.left + headerRect.width / 2 - rootRect.left - iconHalf,
+      y: headerRect.top + headerRect.height / 2 - rootRect.top - iconHalf,
+    });
+
+    setPhase("converge");
+    // Combined pop+shoot starts once converge flames have disappeared (~500ms for expand+bounce+shrink)
+    setTimeout(() => setPhase("closing"), 500);
+    // Container closes when the shoot begins: 500ms + (0.40 * 950ms) = 880ms
+    setTimeout(() => setOpen(false), 880);
   }
+
+  const isClosing = phase === "converge" || phase === "closing";
 
   return (
     <div ref={rootRef} className="relative flex h-full flex-col bg-surface-page-default">
-      <Header flameRef={flameRef} />
+      <Header flameRef={headerFlameRef} streakCount={headerCount} />
       <div className="min-h-0 flex-1" />
 
       {/* Tap-outside overlay */}
@@ -172,24 +194,125 @@ function PointsContent() {
         )}
       </AnimatePresence>
 
-      {/* Accent1 sheet */}
+      {/* Overlay flame layer — outside AnimatePresence, unaffected by sheet slide */}
+      {isClosing && flamePositions.length > 0 && (
+        <div className="pointer-events-none absolute inset-0 z-20">
+          {phase === "converge" && flameExpandedPositions.length > 0 && DOT_ANGLES.map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{ top: 0, left: 0 }}
+              initial={{ x: flamePositions[i].x, y: flamePositions[i].y, scale: 1, opacity: 1 }}
+              animate={{
+                x: [flamePositions[i].x, flameExpandedPositions[i].x, circleCenter.x],
+                y: [flamePositions[i].y, flameExpandedPositions[i].y, circleCenter.y],
+                scale: [1, 1.25, 0],
+                opacity: [1, 1, 0],
+              }}
+              transition={{
+                x: { duration: 0.50, times: [0, 0.30, 1], ease: ["easeOut", "easeInOut"] },
+                y: { duration: 0.50, times: [0, 0.30, 1], ease: ["easeOut", "easeInOut"] },
+                scale: { duration: 0.50, times: [0, 0.30, 1], ease: ["easeOut", "easeIn"] },
+                opacity: { duration: 0.14, ease: "linear", delay: 0.36 },
+              }}
+            >
+              <Flame size={ICON_SIZE_PX.md} weight={ICON_WEIGHT_DEFAULT} style={{ color: "#D29790" }} aria-hidden />
+            </motion.div>
+          ))}
+          {phase === "closing" && (() => {
+            const sx = circleCenter.x;
+            const sy = circleCenter.y;
+            const ex = headerFlamePos.x;
+            const ey = headerFlamePos.y;
+            // Flame pops UP, bounces DOWN, then launches UP into the bezier arc.
+            // shootStartT is when the bounce-up becomes the shoot.
+            const shootStartT = 0.40;
+            const by0 = sy - 10; // y at shoot start (slightly above center)
+            const cpx = sx;
+            const cpy = by0 - (by0 - ey) * 1.12; // overshoot past header for tight arch
+            const N = 10;
+            // Pre-shoot: pop up → bounce down → rebound up (shoot launch)
+            const xKfs  = [sx,       sx,       sx,      sx];
+            const yKfs  = [sy,  sy - 24,   sy - 2,    by0];
+            const xyTimes = [0,     0.14,     0.30,  shootStartT];
+            for (let k = 1; k <= N; k++) {
+              const t = k / N;
+              const u = 1 - t;
+              xKfs.push(u * u * sx + 2 * u * t * cpx + t * t * ex);
+              yKfs.push(u * u * by0 + 2 * u * t * cpy + t * t * ey);
+              xyTimes.push(shootStartT + t * (1 - shootStartT));
+            }
+            // Scale mirrors the bounce: pops large → squishes → rebounds → shrinks to 0
+            const scaleKfs  = [0,   3.4,   2.2,   2.8,  2.5,  1.5,  0.8, 1.05,  0];
+            const scaleTimes = [0,  0.14,  0.28,  0.40, 0.46, 0.62, 0.78, 0.90, 1.0];
+            return (
+              <motion.div
+                key="closing-flame"
+                className="absolute"
+                style={{ top: 0, left: 0 }}
+                animate={{
+                  x: xKfs,
+                  y: yKfs,
+                  scale: scaleKfs,
+                  opacity: [1, 1, 1, 1, 1, 1, 1, 1, 0],
+                }}
+                transition={{
+                  x: { duration: 0.95, times: xyTimes, ease: "linear" },
+                  y: { duration: 0.95, times: xyTimes, ease: "linear" },
+                  scale: { duration: 0.95, times: scaleTimes, ease: "easeOut" },
+                  opacity: { duration: 0.95, times: scaleTimes, ease: "easeOut" },
+                }}
+                onAnimationComplete={() => setHeaderCount(7)}
+              >
+                <Flame size={32} weight={ICON_WEIGHT_DEFAULT} style={{ color: "#D29790" }} aria-hidden />
+              </motion.div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Sheet */}
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute inset-x-0 bottom-0 z-10 bg-surface-container-accent1"
+            className="absolute inset-x-0 bottom-0 z-10 bg-surface-container-accent2"
             style={{ height: "60%", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem", overflow: "visible" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
           >
+            <style>{`
+              @keyframes streak-dot-sweep {
+                from { transform: rotate(-90deg); }
+                to   { transform: rotate(var(--dot-end)); }
+              }
+              @keyframes streak-icon-counter {
+                from { transform: rotate(90deg); opacity: 0; }
+                to   { transform: rotate(var(--dot-counter)); opacity: 1; }
+              }
+              @keyframes streak-seven-pop {
+                0%   { transform: scale(0); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+              }
+              @keyframes streak-seven-shrink {
+                0%   { transform: scale(1); opacity: 1; }
+                40%  { transform: scale(1.15); opacity: 1; }
+                100% { transform: scale(0); opacity: 0; }
+              }
+              @keyframes streak-copy-rise {
+                from { opacity: 0; transform: translateY(12px); }
+                to   { opacity: 1; transform: translateY(0); }
+              }
+            `}</style>
+
             {/* Close button */}
             <div className="flex justify-end px-[1rem] pt-[1rem]">
               <button
                 type="button"
                 aria-label="Close"
                 onClick={handleClose}
-                className="inline-flex text-text-accent1-complementary"
+                className="inline-flex text-text-accent2-complementary"
               >
                 <X size={ICON_SIZE_PX.sm} weight={ICON_WEIGHT_DEFAULT} aria-hidden />
               </button>
@@ -199,103 +322,91 @@ function PointsContent() {
             <div className="flex justify-center pt-[2rem]">
               <div ref={circleRef} className="relative" style={{ width: "12rem", height: "12rem" }}>
 
-                {/* Entry dots — hidden when closing (exit layer takes over) */}
-                {phase !== "closing" && DOT_ANGLES.map((angle, i) => {
+                {/* CSS-animated flames — only during open; overlay takes over on close */}
+                {phase === "ready" && DOT_ANGLES.map((angle, i) => {
                   const endRotate = angle - 90;
                   return (
-                    <motion.div
+                    <div
                       key={i}
                       className="absolute"
-                      style={{ left: "50%", top: "50%", width: 0, height: 0, transformOrigin: "0 0" }}
-                      initial={{ rotate: -90 }}
-                      animate={phase !== "idle" ? { rotate: endRotate } : {}}
-                      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] as const, delay: i * 0.055 }}
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        width: 0,
+                        height: 0,
+                        transformOrigin: "0 0",
+                        ["--dot-end" as string]: `${endRotate}deg`,
+                        ["--dot-counter" as string]: `${-endRotate}deg`,
+                        animation: `streak-dot-sweep 0.8s cubic-bezier(0.4,0,0.2,1) ${i * 0.055}s both`,
+                      }}
                     >
-                      <motion.div
-                        className="absolute rounded-full"
-                        style={{ left: `${CIRCLE_R}rem`, top: "-0.4375rem", width: "0.875rem", height: "0.875rem", backgroundColor: "#D29790" }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.01, delay: i * 0.055 }}
+                      <Flame
+                        aria-hidden
+                        size={ICON_SIZE_PX.md}
+                        weight={ICON_WEIGHT_DEFAULT}
+                        className="absolute"
+                        style={{
+                          left: `${CIRCLE_R}rem`,
+                          top: "-0.625rem",
+                          color: "#D29790",
+                          opacity: 0,
+                          animation: `streak-icon-counter 0.8s cubic-bezier(0.4,0,0.2,1) ${i * 0.055}s both`,
+                        }}
                       />
-                    </motion.div>
+                    </div>
                   );
                 })}
 
-                {/* "7" — pops in, fades out on close */}
-                <motion.span
-                  className="absolute inset-0 flex items-center justify-center font-heading font-semibold text-text-accent1-heading"
-                  style={{ fontSize: display2.size, lineHeight: 1 }}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={phase === "closing"
-                    ? { scale: 0.6, opacity: 0 }
-                    : phase === "ready" ? { scale: 1, opacity: 1 } : {}}
-                  transition={phase === "closing"
-                    ? { duration: 0.25, ease: [0.4, 0, 1, 1] }
-                    : { type: "spring", stiffness: 380, damping: 14, delay: 0.25 }}
-                >
-                  7
-                </motion.span>
+                {/* "7" — pops in on open, bounces out on converge */}
+                {phase !== "idle" && (
+                  <span
+                    className="absolute inset-0 flex items-center justify-center font-heading font-semibold text-text-accent2-heading"
+                    style={{
+                      fontSize: display2.size,
+                      lineHeight: 1,
+                      opacity: 0,
+                      animation: phase === "converge"
+                        ? "streak-seven-shrink 0.18s cubic-bezier(0.4,0,1,1) forwards"
+                        : phase === "closing"
+                          ? "none"
+                          : "streak-seven-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.25s both",
+                    }}
+                  >
+                    7
+                  </span>
+                )}
 
               </div>
             </div>
 
-            {/* Text below the circle */}
-            <div className="flex flex-col items-center gap-[0.5rem] px-[2rem] pt-[1rem]">
-              <motion.p
-                className="font-heading font-semibold leading-snug text-text-accent1-heading text-center"
-                style={{ fontSize: heading4.size }}
-                initial={{ opacity: 0, y: 12 }}
-                animate={phase === "closing" ? { opacity: 0, y: -8 } : phase === "ready" ? { opacity: 1, y: 0 } : {}}
-                transition={phase === "closing" ? { duration: 0.2 } : { duration: 0.55, ease: [0.25, 0.1, 0.25, 1], delay: 0.5 }}
-              >
-                Days Streak
-              </motion.p>
-              <motion.p
-                className="font-serif font-normal leading-snug text-text-accent1-body text-center"
-                style={{ fontSize: bodyBig.size }}
-                initial={{ opacity: 0, y: 12 }}
-                animate={phase === "closing" ? { opacity: 0, y: -8 } : phase === "ready" ? { opacity: 1, y: 0 } : {}}
-                transition={phase === "closing" ? { duration: 0.2, delay: 0.05 } : { duration: 0.55, ease: [0.25, 0.1, 0.25, 1], delay: 0.65 }}
-              >
-                Keep going to become a great storyteller.
-              </motion.p>
-            </div>
+            {/* Text */}
+            {phase !== "idle" && (
+              <div className="flex flex-col items-center gap-[0.5rem] px-[2rem] pt-[1rem]">
+                <p
+                  className="font-heading font-semibold leading-snug text-text-accent2-heading text-center"
+                  style={{
+                    fontSize: heading4.size,
+                    opacity: 0,
+                    animation: "streak-copy-rise 0.55s cubic-bezier(0.25,0.1,0.25,1) 0.5s both",
+                  }}
+                >
+                  Days Streak
+                </p>
+                <p
+                  className="font-serif font-normal leading-snug text-text-accent2-body text-center"
+                  style={{
+                    fontSize: bodyBig.size,
+                    opacity: 0,
+                    animation: "streak-copy-rise 0.55s cubic-bezier(0.25,0.1,0.25,1) 0.65s both",
+                  }}
+                >
+                  Keep going to become a great storyteller.
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Exit dots layer — rendered outside the container so the container slide doesn't affect them */}
-      {phase === "closing" && DOT_ANGLES.map((angle, i) => {
-        const endRotate = angle - 90;
-        const ri = DOT_ANGLES.length - 1 - i;
-        const UNSWEEP_STAGGER = 0.07;
-        const UNSWEEP_DUR = 0.42;
-        const unsweepDelay = ri * UNSWEEP_STAGGER;
-        const shootDelay = unsweepDelay + UNSWEEP_DUR - 0.08;
-        return (
-          <motion.div
-            key={`exit-${i}`}
-            className="pointer-events-none absolute z-20"
-            style={{ left: circleLayerPos.x, top: circleLayerPos.y, width: 0, height: 0 }}
-            animate={{ x: exitTarget.x, y: exitTarget.y, opacity: 0 }}
-            transition={{ duration: 0.38, ease: [0.4, 0, 0.8, 1] as const, delay: shootDelay }}
-          >
-            <motion.div
-              className="absolute"
-              style={{ width: 0, height: 0, transformOrigin: "0 0" }}
-              initial={{ rotate: endRotate }}
-              animate={{ rotate: -72 }}
-              transition={{ duration: UNSWEEP_DUR, ease: [0.4, 0, 0.2, 1] as const, delay: unsweepDelay }}
-            >
-              <div
-                className="absolute rounded-full"
-                style={{ left: `${CIRCLE_R}rem`, top: "-0.4375rem", width: "0.875rem", height: "0.875rem", backgroundColor: "#D29790" }}
-              />
-            </motion.div>
-          </motion.div>
-        );
-      })}
 
       <NavigationBar />
     </div>

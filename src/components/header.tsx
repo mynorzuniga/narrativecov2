@@ -2,6 +2,7 @@
 
 import { Bell, Flame, User, X } from "@phosphor-icons/react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { ICON_SIZE_PX, ICON_WEIGHT_DEFAULT } from "@/lib/icons/scale";
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { BODY_STYLES } from "@/lib/typography/scale";
@@ -15,10 +16,12 @@ const iconButtonClass =
 type HeaderProps = {
   onBellClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   flameRef?: React.RefObject<HTMLSpanElement | null>;
+  streakCount?: number;
 };
 
-export function Header({ onBellClick, flameRef }: HeaderProps = {}) {
+export function Header({ onBellClick, flameRef, streakCount }: HeaderProps = {}) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const displayCount = streakCount ?? 7;
 
   const handleBellClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (onBellClick) {
@@ -40,12 +43,16 @@ export function Header({ onBellClick, flameRef }: HeaderProps = {}) {
               aria-hidden
             />
           </span>
-          <span
+          <motion.span
+            key={displayCount}
             className="font-heading font-medium leading-none text-text-default-heading"
             style={{ fontSize: bodyStandard.size }}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 14 }}
           >
-            7
-          </span>
+            {displayCount}
+          </motion.span>
         </div>
 
         <span
