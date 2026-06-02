@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
+import { ArrowRight } from "@phosphor-icons/react";
+import { CtaButton } from "@/components/cta-button";
 import { Bell, Flame, X } from "@phosphor-icons/react";
 import { PhonePreviewFrame } from "@/components/design-system/phone-preview-frame";
 import { Preview2Content } from "@/components/preview-2-content";
@@ -21,13 +23,14 @@ const display2 = DISPLAY_STYLES.find((s) => s.id === "display2")!;
 const DOT_ANGLES = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5];
 const CIRCLE_R = 4; // rem
 
-type Scenario = "onboarding" | "open-close" | "points" | "points2";
+type Scenario = "onboarding" | "open-close" | "points" | "points2" | "swipe";
 
 const scenarios: { id: Scenario; label: string }[] = [
   { id: "onboarding", label: "Onboarding" },
   { id: "open-close", label: "Open-Close" },
   { id: "points", label: "Points" },
   { id: "points2", label: "Points 2" },
+  { id: "swipe", label: "Swipe" },
 ];
 
 const mockNotifications = [
@@ -35,6 +38,150 @@ const mockNotifications = [
   { id: "2", title: "New lesson available", body: "\u201cThe Art of Narrative\u201d has a new section ready for you." },
   { id: "3", title: "Progress milestone", body: "You completed 80% of this week\u2019s course material. Nice work." },
 ] as const;
+
+const CARD_START_X = 300;
+const CARD_START_Y = 650;
+const CARD_START_ROT = 15;
+
+// Stack from bottom (z-20) to top (z-27). Top card (100) is lightest and arrives last.
+const CARD_STACK = [
+  { color: "#891616", lag: 0.00 },  // oxblood-800 — main, moves first
+  { color: "#97332d", lag: 0.08 },  // oxblood-700
+  { color: "#a54a42", lag: 0.14 },  // oxblood-600
+  { color: "#b26057", lag: 0.19 },  // oxblood-500
+  { color: "#c17971", lag: 0.23 },  // oxblood-400
+  { color: "#d29790", lag: 0.26 },  // oxblood-300
+  { color: "#e4b9b4", lag: 0.28 },  // oxblood-200
+  { color: "#f6ddd9", lag: 0.30 },  // oxblood-100 — lightest, arrives last
+];
+
+function SwipeContent() {
+  const swipeContainerRef = useRef<HTMLDivElement>(null);
+  const swipeButtonRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dragX = useMotionValue(0);
+  const dragMaxRef = useRef(1);
+
+  const setCardTransform = (el: HTMLDivElement, p: number) => {
+    if (p >= 1) {
+      el.style.transform = "";
+      el.style.borderRadius = "0px";
+    } else {
+      el.style.transform = `translate(${CARD_START_X * (1 - p)}px, ${CARD_START_Y * (1 - p)}px) rotate(${CARD_START_ROT * (1 - p)}deg)`;
+      el.style.borderRadius = "32px";
+    }
+  };
+
+  const handleDragStart = () => {
+    const c = swipeContainerRef.current?.getBoundingClientRect();
+    const b = swipeButtonRef.current?.getBoundingClientRect();
+    if (c && b) dragMaxRef.current = Math.max(1, c.width - b.width);
+  };
+
+  const handleDrag = () => {
+    const p = dragX.get() / dragMaxRef.current;
+    CARD_STACK.forEach(({ lag }, i) => {
+      const el = cardRefs.current[i];
+      if (el) setCardTransform(el, Math.max(0, p - lag));
+    });
+  };
+
+  const handleDragEnd = () => {
+    const p = dragX.get() / dragMaxRef.current;
+    const completed = p >= 0.85;
+
+    if (completed) {
+      // Snap all cards into place — each slightly staggered with a spring overshoot
+      CARD_STACK.forEach((_, i) => {
+        const el = cardRefs.current[i];
+        if (!el) return;
+        setTimeout(() => {
+          el.style.transition = "transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1), border-radius 0.2s ease";
+          setCardTransform(el, 1);
+          setTimeout(() => { el.style.transition = ""; }, 500);
+        }, i * 25);
+      });
+      animate(dragX, dragMaxRef.current, { duration: 0 });
+    } else {
+      // Snap all cards back to start
+      CARD_STACK.forEach((_, i) => {
+        const el = cardRefs.current[i];
+        if (!el) return;
+        el.style.transition = "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s ease";
+        setCardTransform(el, 0);
+        setTimeout(() => { el.style.transition = ""; }, 450);
+      });
+      animate(dragX, 0, { duration: 0 });
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col px-[1rem] pt-[1rem]">
+      {/* Card stack — positioned relative to phone frame inner div */}
+      {CARD_STACK.map(({ color, lag: _lag }, i) => (
+        <div
+          key={i}
+          ref={(el) => { cardRefs.current[i] = el; }}
+          className="absolute inset-0"
+          style={{
+            backgroundColor: color,
+            zIndex: 20 + i,
+            transform: `translate(${CARD_START_X}px, ${CARD_START_Y}px) rotate(${CARD_START_ROT}deg)`,
+            borderRadius: 32,
+          }}
+        />
+      ))}
+      {/* Logo */}
+      <div className="flex shrink-0 justify-center">
+        <span className="text-center font-heading font-medium leading-none" style={{ fontSize: bodyBig.size }}>
+          <span style={{ color: "#312c2c" }}>Narrative</span>
+          <span style={{ color: "#891616" }}>Co</span>
+        </span>
+      </div>
+
+      <h1
+        className="mt-[4rem] shrink-0 font-heading font-semibold leading-snug"
+        style={{ fontSize: display2.size, color: "#312c2c" }}
+      >
+        Start Your{" "}
+        <span style={{ color: "#891616" }}>Journey</span>
+      </h1>
+
+      <p
+        className="mt-[1rem] shrink-0 font-serif font-normal leading-snug"
+        style={{ fontSize: bodyBig.size, color: "#686363" }}
+      >
+        You are a couple of steps away from getting better at telling stories. Let&apos;s start this journey together.
+      </p>
+
+      <div className="relative z-30 mt-auto shrink-0 pb-[1.5rem] pt-[1.25rem]">
+        <div
+          ref={swipeContainerRef}
+          className="overflow-hidden rounded-[0.75rem] border bg-surface-page-default p-[0.5rem]"
+          style={{ borderColor: "var(--color-line-field-enabled)" }}
+        >
+          <motion.div
+            ref={swipeButtonRef}
+            drag="x"
+            dragConstraints={swipeContainerRef}
+            dragElastic={0}
+            dragMomentum={false}
+            style={{ x: dragX }}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
+            className="w-fit cursor-grab active:cursor-grabbing"
+          >
+            <CtaButton variant="primary" onClick={undefined}>
+              Swipe
+              <ArrowRight size={ICON_SIZE_PX.md} weight={ICON_WEIGHT_DEFAULT} aria-hidden className="ml-[0.5rem]" />
+            </CtaButton>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function OpenCloseContent() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -815,7 +962,7 @@ export default function Preview2Page() {
 
           {/* Left sidebar */}
           <nav className="flex w-[9rem] shrink-0 flex-col gap-[0.25rem]">
-            {scenarios.filter(({ id }) => id !== "onboarding" && id !== "open-close").map(({ id, label }) => {
+            {scenarios.filter(({ id }) => id !== "swipe").map(({ id, label }) => {
               const isActive = scenario === id;
               return (
                 <button
@@ -839,7 +986,7 @@ export default function Preview2Page() {
           {/* Phone frame */}
           <div className="flex items-center gap-[1.5rem]">
             <PhonePreviewFrame key={`${scenario}-${resetKey}`}>
-              {scenario === "onboarding" ? <Preview2Content /> : scenario === "open-close" ? <OpenCloseContent /> : scenario === "points" ? <PointsContent /> : <Points2Content />}
+              {scenario === "onboarding" ? <Preview2Content /> : scenario === "open-close" ? <OpenCloseContent /> : scenario === "swipe" ? <SwipeContent /> : scenario === "points" ? <PointsContent /> : <Points2Content />}
             </PhonePreviewFrame>
 
             {/* Reset button — always visible */}
